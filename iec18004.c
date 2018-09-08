@@ -281,6 +281,8 @@ qr_encode (
    if (modec && !*modec)
       modec = NULL;             // Silly
    char *mode = malloc (len);
+   if (!mode)
+      return NULL;
    if (modec)                   // Use provided mode (pad)
       for (n = 0; n < len; n++)
       {
@@ -393,6 +395,8 @@ qr_encode (
    // Encode data
    int total = bytes (ver) - eccbytes[ver - 1][ecl];
    ui8 *data = malloc (total);
+   if (!data)
+      return NULL;
    size_t dataptr = 0;
    unsigned long long v = 0;
    unsigned int b = 0;
@@ -519,7 +523,11 @@ qr_encode (
 #endif
                     0x11D, eccsize, 0);
       ui8 *ecc = malloc (eccsize);
+      if (!ecc)
+         return NULL;
       ui8 *final = malloc (total + ecctotal);
+      if (!final)
+         return NULL;
       int datas = total / blocks;
       int datan = blocks - (total - datas * blocks);
 #ifdef DEBUG
@@ -560,6 +568,8 @@ qr_encode (
 #endif
    int w = ver * 4 + 17;
    ui8 *grid = malloc ((w + 8) * (w + 8));
+   if (!grid)
+      return NULL;
    if (!grid)
    {
       free (mode);
