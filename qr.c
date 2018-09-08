@@ -101,7 +101,7 @@ main (int argc, const char *argv[])
       {"total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N"},
       {"outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or - or data:"},
       {"format", 'f', POPT_ARGFLAG_SHOW_DEFAULT | POPT_ARG_STRING, &format, 0, "Output format",
-       "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps"},
+       "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg"},
       POPT_AUTOHELP {
                      NULL, 0, 0, NULL, 0}
    };
@@ -209,8 +209,8 @@ main (int argc, const char *argv[])
       }
       break;
    case 'e':                   // EPS
-      printf ("%%!PS-Adobe-3.0 EPSF-3.0\n" "%%%%Creator: IEC16022 barcode/stamp generator\n" "%%%%BarcodeData: %s\n"
-              "%%%%BarcodeSize: %dx%d\n" "%%%%BarcodeFormat: ECC200\n" "%%%%DocumentData: Clean7Bit\n" "%%%%LanguageLevel: 1\n"
+      printf ("%%!PS-Adobe-3.0 EPSF-3.0\n" "%%%%Creator: IEC18004 barcode/stamp generator\n" "%%%%BarcodeData: %s\n"
+              "%%%%BarcodeSize: %dx%d\n" "%%%%DocumentData: Clean7Bit\n" "%%%%LanguageLevel: 1\n"
               "%%%%Pages: 1\n" "%%%%BoundingBox: 0 0 %d %d\n" "%%%%EndComments\n" "%%%%Page: 1 1\n", barcode, W * S, H * S,
               W * S, H * S);
    case 'g':                   // PS
@@ -218,6 +218,25 @@ main (int argc, const char *argv[])
       printf ("%d %d 1[1 0 0 1 0 0]{<\n", W * S, H * S);
       dumphex (grid, W, H, 0xFF, S, 0);
       printf (">}image\n");
+      break;
+   case 'v':                   // svg
+      {
+         int x,
+           y;
+         Image *i;
+         i = ImageNew (W, H, 2);
+         i->Colour[0] = 0xFFFFFF;
+         i->Colour[1] = 0;
+         for (y = 0; y < H; y++)
+            for (x = 0; x < W; x++)
+               if (grid[(H - 1 - y) * W + x] & 1)
+                  ImagePixel (i, x, H - y - 1) = 1;
+         if (isupper (*format))
+            ImageSVGPath (i, stdout, 1);
+         else
+            ImageWriteSVG (i, fileno (stdout), 0, -1, barcode, S);
+         ImageFree (i);
+      }
       break;
    case 'p':                   // png
       {
