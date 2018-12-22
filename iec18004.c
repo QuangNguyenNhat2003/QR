@@ -10,7 +10,7 @@
 
 #define LIB
 #include <heaps.h>
-#include <iec18004.h>
+#include "iec18004.h"
 #include <reedsol.h>
 #include <sys_lib.h>
 
@@ -38,7 +38,7 @@ typedef unsigned char ui8;
 #include <err.h>
 #include <axl.h>
 #include <sqllib.h>
-#include <iec18004.h>
+#include "iec18004.h"
 #include <reedsol.h>
 
 #endif

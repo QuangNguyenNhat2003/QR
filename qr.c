@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
-#include "image.h"
-#include <iec18004.h>
+#include <image.h>
+#include "iec18004.h"
 
  // simple checked response malloc
 void *
