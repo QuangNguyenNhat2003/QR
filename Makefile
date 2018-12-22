@@ -3,8 +3,8 @@ all: git qr
 qr: qr.c Image/image.o Reedsol/reedsol.o iec18004.o
 	cc -O -o $@ $< Image/image.o Reedsol/reedsol.o iec18004.o -lpopt -lz -IImage -IReedsol
 
-iec18004.o: iec18004.c AXL/axl.o SQLlib/sqllib.o
-	cc -O -c -o $@ $< -IReedsol -IAXL -ISQLlib AXL/axl.o SQLlib/sqllib.o -DLIB
+iec18004.o: iec18004.c
+	cc -O -c -o $@ $< -IReedsol -IAXL -ISQLlib -DLIB
 
 Image/image.o: Image/image.c
 	make -C Image
