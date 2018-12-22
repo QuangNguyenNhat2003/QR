@@ -37,7 +37,6 @@ typedef unsigned char ui8;
 #include <ctype.h>
 #include <err.h>
 #include <axl.h>
-#include <sqllib.h>
 #include "iec18004.h"
 #include <reedsol.h>
 
