@@ -75,6 +75,7 @@ main (int argc, const char *argv[])
    int barcodelen = 0;
    char *outfile = NULL;
    char *infile = NULL;
+   char *inenv = NULL;
    char *barcode = NULL;
    char *format = NULL;
    char *eccstr = NULL;
@@ -94,6 +95,7 @@ main (int argc, const char *argv[])
    const struct poptOption optionsTable[] = {
       {"barcode", 'c', POPT_ARG_STRING, &barcode, 0, "Barcode", "text"},
       {"infile", 'i', POPT_ARG_STRING, &infile, 0, "Barcode file", "filename"},
+      {"inenv", '$', POPT_ARG_STRING, &inenv, 0, "Barcode from environment variable", "envname"},
       {"mode", 'm', POPT_ARG_STRING, &modestr, 0, "Mode", "N/A/8/K"},
       {"ecl", 'e', POPT_ARG_STRING, &eccstr, 0, "EC level", "L/M/Q/H"},
       {"version", 'v', POPT_ARG_INT, &ver, 0, "Version(size)", "1-40"},
@@ -128,9 +130,9 @@ main (int argc, const char *argv[])
    if ((c = poptGetNextOpt (optCon)) < -1)
       errx (1, "%s: %s\n", poptBadOption (optCon, POPT_BADOPTION_NOALIAS), poptStrerror (c));
 
-   if (poptPeekArg (optCon) && !barcode && !infile)
+   if (poptPeekArg (optCon) && !barcode && !infile && !inenv)
       barcode = (char *) poptGetArg (optCon);
-   if (poptPeekArg (optCon) || (!barcode && !infile) || (barcode && infile))
+   if (poptPeekArg (optCon) || (!barcode && !infile && !inenv) || (barcode && infile) || (barcode && inenv) || (infile && inenv))
    {
       poptPrintUsage (optCon, stderr, 0);
       return -1;
@@ -169,6 +171,9 @@ main (int argc, const char *argv[])
    }
    if (outfile && strcmp (outfile, "-") && !freopen (outfile, "w", stdout))
       err (1, "%s", outfile);
+
+   if (inenv && !(barcode = getenv (inenv)))
+      errx (1, "Cannot access $%s", inenv);
 
    if (infile)
    {                            // read from file
