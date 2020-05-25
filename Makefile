@@ -1,4 +1,7 @@
-all: git qr
+all: qr
+
+update:
+	git submodule update --remote --merge
 
 qr: qr.c Image/image.o Reedsol/reedsol.o iec18004.o
 	cc -O -o $@ $< Image/image.o Reedsol/reedsol.o iec18004.o -lpopt -lz -IImage -IReedsol
@@ -14,6 +17,3 @@ Reedsol/reedsol.o: Reedsol/reedsol.c
 
 AXL/axl.o: AXL/axl.c
 	make -C AXL
-
-git:
-	git submodule update --init
