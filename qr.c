@@ -204,7 +204,7 @@ main (int argc, const char *argv[])
       else
          err (1, "ECC mode unknown");
    }
-   grid = qr_encode (strlen (barcode), barcode, ver, ecl, mask, modestr, &W, eci, fnc1, sam, san);
+   grid = qr_encode (barcodelen, barcode, ver, ecl, mask, modestr, &W, eci, fnc1, sam, san);
    H = W;
 
    // output
