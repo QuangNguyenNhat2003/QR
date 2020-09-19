@@ -42,7 +42,7 @@ typedef unsigned char ui8;
 
 #endif
 
-// TODO Kanji mode - needs iconv UTF-8 to Shidft JIS and then coding
+// TODO Kanji mode - needs iconv UTF-8 to Shift JIS and then coding
 // TODO micro QR
 
 static char alnum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
