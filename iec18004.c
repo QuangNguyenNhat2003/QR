@@ -259,46 +259,45 @@ getmask (int x, int y, int mask)
 }
 
 ui8 *
-qr_encode (
+qr_encode_opts (
 #ifdef	FB
              heap_h heap,
 #endif
-             int len, const char *input, int ver, int ecl, int mask, const char *modec, int *widthp, int eci, int fnc1, int sam,
-             int san)
+	     qr_encode_t o)
 {                               // Return (malloced) byte array width*width wide (includes mandatory quiet zone)
    int n;
-   if (widthp)
-      *widthp = 0;
-   if (ecl < 0 || ecl > 3)
+   if (o.widthp)
+      *o.widthp = 0;
+   if (o.ecl < 0 || o.ecl > 3)
       return NULL;
-   if (san < 0 || sam < 0 || san > 16 || sam > 16 || san > sam || (sam && !san))
+   if (o.san < 0 || o.sam < 0 || o.san > 16 || o.sam > 16 || o.san > o.sam || (o.sam && !o.san))
       return NULL;              // Silly structured append
-   if (ver < 0 || ver > 40)
+   if (o.ver < 0 || o.ver > 40)
       return NULL;              // Silly version
-   if (fnc1 < 0 || fnc1 > 2)
+   if (o.fnc1 < 0 || o.fnc1 > 2)
       return NULL;              // Silly fnc1
-   if (modec && !*modec)
-      modec = NULL;             // Silly
-   char *mode = malloc (len);
+   if (o.mode && !*o.mode)
+      o.mode = NULL;             // Silly
+   char *mode = malloc (o.len);
    if (!mode)
       return NULL;
-   if (modec)                   // Use provided mode (pad)
-      for (n = 0; n < len; n++)
+   if (o.mode)                   // Use provided mode (pad)
+      for (n = 0; n < o.len; n++)
       {
-         mode[n] = *modec;
-         if (modec[1])
-            modec++;
+         mode[n] = *o.mode;
+         if (o.mode[1])
+            o.mode++;
       }
-   if (!eci)
+   if (!o.eci)
    {                            // No ECI set, lets see if we need to set UTF-8, note 5C is Yen in default ECI and 7E is special too
-      for (n = 0; n < len && !(input[n] & 0x80) && input[n] != 0x5C && input[n] != 0x7E; n++);
-      if (n < len)
-         eci = 26;              // UTF-8 ECI
+      for (n = 0; n < o.len && !(o.data[n] & 0x80) && o.data[n] != 0x5C && o.data[n] != 0x7E; n++);
+      if (n < o.len)
+         o.eci = 26;              // UTF-8 ECI
    }
-   if (eci == 20)
-      eci = 0;                  // 20 is default (JIS8 and Shift JIS)
+   if (o.eci == 20)
+      o.eci = 0;                  // 20 is default (JIS8 and Shift JIS)
 #ifdef DEBUG
-   fprintf (stderr, "[%d] %.*s ver=%d ecl=%d mask=%d\n", len, len, input, ver, ecl, mask);
+   fprintf (stderr, "[%d] %.*s ver=%d ecl=%d mask=%d\n", o.len, o.len, o.data, ver, o.ecl, o.mask);
 #endif
    int bytes (int v)
    {
@@ -317,36 +316,36 @@ qr_encode (
    {                            // work out bit count 
       int count = 0,
          n = 0;
-      if (!modec)
-         qr_mode (mode, ver, len, input);
-      if (san)
+      if (!o.mode)
+         qr_mode (mode, o.ver, o.len, o.data);
+      if (o.san)
          count += 12;           // Structured append
-      if (eci > 16383)
+      if (o.eci > 16383)
          count += 28;
-      else if (eci > 127)
+      else if (o.eci > 127)
          count += 20;
-      else if (eci)
+      else if (o.eci)
          count += 12;
-      if (fnc1)
+      if (o.fnc1)
          count += 4;            // FNC1
-      while (n < len)
+      while (n < o.len)
       {
          char m = mode[n];
          int q = 0;
-         while (n + q < len && mode[n + q] == m)
+         while (n + q < o.len && mode[n + q] == m)
             q++;
-         count += qr_bits (ver, m, q);
+         count += qr_bits (o.ver, m, q);
          // validity check
          switch (m)
          {
          case 'N':             // Numeric 
             while (q--)
-               if (!input[n] || !isdigit (input[n++]))
+               if (!o.data[n] || !isdigit (o.data[n++]))
                   return -1;    // Invalid
             break;
          case 'A':             // Alphanumeric
             while (q--)
-               if (!input[n] || !strchr (alnum, toupper (input[n++])))
+               if (!o.data[n] || !strchr (alnum, toupper (o.data[n++])))
                   return -1;    // Invalid
             break;
          case '8':             // 8 bit
@@ -357,23 +356,23 @@ qr_encode (
          }
       }
 #ifdef DEBUG
-      fprintf (stderr, "Ver=%d Bits=%d (%d)\n", ver, count, (count + 7) / 8);
+      fprintf (stderr, "Ver=%d Bits=%d (%d)\n", o.ver, count, (count + 7) / 8);
 #endif
       return count;
    }
-   if (!ver)
+   if (!o.ver)
    {                            // Work out version
       int count = 0;
-      for (ver = 1; ver <= 40; ver++)
+      for (o.ver = 1; o.ver <= 40; o.ver++)
       {
-         if (!count || ver == 10 || ver == 27)
+         if (!count || o.ver == 10 || o.ver == 27)
             count = bits ();    // bit count changes at 10 and 27
          if (count < 0)
          {
             free (mode);
             return NULL;        // Not valid
          }
-         if ((count + 7) / 8 <= bytes (ver) - eccbytes[ver - 1][ecl])
+         if ((count + 7) / 8 <= bytes (o.ver) - eccbytes[o.ver - 1][o.ecl])
             break;              // found one
       }
    } else if (bits () < 0)
@@ -381,18 +380,18 @@ qr_encode (
       free (mode);
       return NULL;              // not valid
    }
-   if (!ver || ver > 40)
+   if (!o.ver || o.ver > 40)
    {
       free (mode);
       return NULL;
    }
 #ifdef DEBUG
-   fprintf (stderr, "ECL=%d Ver=%d Bytes=%d ECC=%d\n", ecl, ver, bytes (ver), eccbytes[ver - 1][ecl]);
-   fprintf (stderr, "Data: %.*s\n", len, input);
-   fprintf (stderr, "Mode: %.*s\n", len, mode);
+   fprintf (stderr, "ECL=%d Ver=%d Bytes=%d ECC=%d\n", o.ecl, o.ver, bytes (o.ver), eccbytes[o.ver - 1][o.ecl]);
+   fprintf (stderr, "Data: %.*s\n", o.len, o.data);
+   fprintf (stderr, "Mode: %.*s\n", o.len, mode);
 #endif
    // Encode data
-   int total = bytes (ver) - eccbytes[ver - 1][ecl];
+   int total = bytes (o.ver) - eccbytes[o.ver - 1][o.ecl];
    ui8 *data = malloc (total);
    if (!data)
       return NULL;
@@ -415,68 +414,68 @@ qr_encode (
       fputc (' ', stderr);
 #endif
    }
-   if (san)
+   if (o.san)
    {
       addbits (4, 3);           //Structured append
-      addbits (4, sam - 1);
-      addbits (4, san - 1);
+      addbits (4, o.sam - 1);
+      addbits (4, o.san - 1);
    }
-   if (eci)
+   if (o.eci)
    {
       addbits (4, 7);           // ECI
-      if (eci > 16384)
-         addbits (24, 0xC00000 + eci);
-      else if (eci > 127)
-         addbits (16, 0x8000 + eci);
+      if (o.eci > 16384)
+         addbits (24, 0xC00000 + o.eci);
+      else if (o.eci > 127)
+         addbits (16, 0x8000 + o.eci);
       else
-         addbits (8, eci);
+         addbits (8, o.eci);
    }
-   if (fnc1 == 1)
+   if (o.fnc1 == 1)
       addbits (4, 5);           // FNC1 (1st)
-   if (fnc1 == 2)
+   if (o.fnc1 == 2)
       addbits (4, 9);           // FNC1 (2nd)
    n = 0;
-   while (n < len)
+   while (n < o.len)
    {
       char m = mode[n];
       int q = 0;
-      while (n + q < len && mode[n + q] == m)
+      while (n + q < o.len && mode[n + q] == m)
          q++;
       switch (m)
       {
       case 'N':                // Numeric
          addbits (4, 1);        // mode
-         addbits (ver < 10 ? 10 : ver < 27 ? 12 : 14, q);       // Length
+         addbits (o.ver < 10 ? 10 : o.ver < 27 ? 12 : 14, q);       // Length
          while (q >= 3)
          {
-            addbits (10, (input[n] - '0') * 100 + (input[n + 1] - '0') * 10 + (input[n + 2] - '0'));
+            addbits (10, (o.data[n] - '0') * 100 + (o.data[n + 1] - '0') * 10 + (o.data[n + 2] - '0'));
             n += 3;
             q -= 3;
          }
          if (q == 2)
          {
-            addbits (7, (input[n] - '0') * 10 + (input[n + 1] - '0'));
+            addbits (7, (o.data[n] - '0') * 10 + (o.data[n + 1] - '0'));
             n += 2;
          } else if (q == 1)
-            addbits (4, (input[n++] - '0'));
+            addbits (4, (o.data[n++] - '0'));
          break;
       case 'A':                // Alphanumeric
          addbits (4, 2);        // mode
-         addbits (ver < 10 ? 9 : ver < 27 ? 11 : 13, q);        // Length
+         addbits (o.ver < 10 ? 9 : o.ver < 27 ? 11 : 13, q);        // Length
          while (q >= 2)
          {
-            addbits (11, (strchr (alnum, toupper (input[n])) - alnum) * 45 + (strchr (alnum, toupper (input[n + 1])) - alnum));
+            addbits (11, (strchr (alnum, toupper (o.data[n])) - alnum) * 45 + (strchr (alnum, toupper (o.data[n + 1])) - alnum));
             n += 2;
             q -= 2;
          }
          if (q)
-            addbits (6, strchr (alnum, toupper (input[n++])) - alnum);
+            addbits (6, strchr (alnum, toupper (o.data[n++])) - alnum);
          break;
       case '8':                // 8 bit
          addbits (4, 4);        // mode
-         addbits (ver < 10 ? 8 : 16, q);        // Length
+         addbits (o.ver < 10 ? 8 : 16, q);        // Length
          while (q--)
-            addbits (8, input[n++]);
+            addbits (8, o.data[n++]);
          break;
       default:
          free (mode);
@@ -505,8 +504,8 @@ qr_encode (
 #endif
    // Add ECC
    {
-      int blocks = eccbytes[ver - 1][ecl + 4];
-      int ecctotal = eccbytes[ver - 1][ecl];
+      int blocks = eccbytes[o.ver - 1][o.ecl + 4];
+      int ecctotal = eccbytes[o.ver - 1][o.ecl];
       int eccsize = ecctotal / blocks;
       if (eccsize * blocks != ecctotal)
       {
@@ -565,7 +564,7 @@ qr_encode (
       fprintf (stderr, "%02X ", data[n]);
    fprintf (stderr, "\n");
 #endif
-   int w = ver * 4 + 17;
+   int w = o.ver * 4 + 17;
    ui8 *grid = malloc ((w + 8) * (w + 8));
    if (!grid)
       return NULL;
@@ -643,11 +642,11 @@ qr_encode (
       white (6, n);
    }
    // Alignment pattern
-   if (ver > 1)
+   if (o.ver > 1)
    {
       int pn = (w - 17) / 28 + 2;
       int ps = ((w - 13) / 2 + pn - 2) / (pn - 1) * 2;
-      if (ver == 32)
+      if (o.ver == 32)
          ps = 26;
       int x,
         y;
@@ -689,7 +688,7 @@ qr_encode (
    black (8, w - 8);
    void setfcode (int mask)
    {                            // Format info
-      unsigned int fcode = (((ecl ^ 1) << 3) + (mask & 7));
+      unsigned int fcode = (((o.ecl ^ 1) << 3) + (mask & 7));
       fcode = bch_format (fcode);
       for (n = 0; n <= 5; n++)
          set (8, n, (fcode & (1 << n)) ? 1 : 0);
@@ -703,11 +702,11 @@ qr_encode (
       for (n = 8; n << 14; n++)
          set (8, w - (14 - n) - 1, (fcode & (1 << n)) ? 1 : 0);
    }
-   setfcode (mask);
+   setfcode (o.mask);
    // Version info
-   if (ver >= 7)
+   if (o.ver >= 7)
    {
-      unsigned int vcode = bch_version (ver);
+      unsigned int vcode = bch_version (o.ver);
 #ifdef DEBUG
       fprintf (stderr, "Vcode=%X\n", vcode);
 #endif
@@ -720,7 +719,7 @@ qr_encode (
             set (w - 11 + y, x, (vcode & (1 << (y + x * 3))) ? 1 : 0);
          }
    }
-   // Load data (masked)
+   // Load data (o.masked)
    {
       int u = 1;
       int b = 7;
@@ -778,7 +777,7 @@ qr_encode (
    {                            // Masking
       int x,
         y;
-      if (!mask)
+      if (!o.mask)
       {                         // Auto mask
          int best = -1,
             m,
@@ -823,20 +822,20 @@ qr_encode (
             if (maskbad[m] < best || best < 0)
             {
                best = maskbad[m];
-               mask = m;
+               o.mask = m;
             }
          }
       }
       for (x = 0; x < w; x++)
          for (y = 0; y < w; y++)
             if (grid[(w + 8) * (y + 4) + (x + 4)] & 4)  // data bit
-               grid[(w + 8) * (y + 4) + (x + 4)] ^= getmask (x, y, mask);
+               grid[(w + 8) * (y + 4) + (x + 4)] ^= getmask (x, y, o.mask);
    }
-   setfcode (mask);
+   setfcode (o.mask);
    free (data);
    free (mode);
-   if (widthp)
-      *widthp = w + 8;
+   if (o.widthp)
+      *o.widthp = w + 8;
    return grid;
 }
 

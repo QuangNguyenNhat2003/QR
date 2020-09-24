@@ -9,19 +9,22 @@ enum
    QR_ECL_H,                    // 10
 };
 
-
-// Encode to QR code, output is malloc'd, width*width bytes where bit 0 means black
-// widthp is for writing back the width
-// mode is string of A (alphanumeric), N (numeric), 8 (8 bit), or K (Kanji) for each input character, last code repeats so can be one letter, NULL means auto
-// fnc1 can be 1 or 2 for 1st or 2nd FNC code
-// eci is character coding, 0 is auto which sets 26 (UTF-8) if any high bit set bytes are in the data
-// mask is 1-8 for masks 1-7 and 0. Use 0 for auto mask
-// ecl is as above, 0 is medium
-// data is len bytes and assumed to be UTF-8. Any high byte characters cause an ECI for UTF-8 to be included
-// ver is 1-40 for barcode size, or 0 for auto
-// NULL return on error
-// sam and san are structured append, 1-16 for code m of n
-unsigned char *qr_encode (int len, const char *data, int ver, int ecl, int mask, const char *mode, int *widthp, int eci, int fnc1,int sam,int san);
+typedef struct
+{
+	int len;		// Data length
+	const char *data;	// Data (can include nulls if required)
+	unsigned char ver;	// Size of QR code (units) 1-40, or 0 for auto
+	unsigned char ecl;	// Error correction level 0-3
+	unsigned char mask;	// Masking code 1-8 for modes 0-7, 0 for auto
+	const char *mode;	// Character mode string
+	unsigned int *widthp;		// Return width
+	unsigned int eci;		// Coding indicator (0=auto)
+	unsigned char fnc1;		// Function code 0-2
+	unsigned char sam;		// Structured append 1-16 index
+	unsigned char san;		// Structured append 1-16 total
+} qr_encode_t;
+#define	qr_encode(...)	qr_encode_opts((qr_encode_t){__VA_ARGS__})
+unsigned char *qr_encode_opts (qr_encode_t);
 
 // Used internally, but this allows you to see what the automatic mode calculation comes up with
 void qr_mode (char *mode, int ver, int len, const char *input); // Work out a mode for input
