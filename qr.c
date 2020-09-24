@@ -118,7 +118,7 @@ int main(int argc, const char *argv[])
       { "scale", 0, POPT_ARG_INT, &S, 0, "Scale", "pixels" },
       { "mm", 0, POPT_ARG_DOUBLE, &scale, 0, "Size of pixels", "mm" },
       { "dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi" },
-      { "no-quiet", 'q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
+      { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
       { "format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg" },
       POPT_AUTOHELP {
