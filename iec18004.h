@@ -5,8 +5,8 @@ enum
 {                               // Error Correction Level
    QR_ECL_L,                    // 01
    QR_ECL_M,                    // 00
-   QR_ECL_Q,                    // 10
-   QR_ECL_H,                    // 11
+   QR_ECL_Q,                    // 11
+   QR_ECL_H,                    // 10
 };
 
 
