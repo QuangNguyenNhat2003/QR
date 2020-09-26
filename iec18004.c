@@ -546,21 +546,21 @@ ui8 *qr_encode_opts(
 #endif
       int p = 0,
           q = 0;
+      void add(int o) {         // Add byte and set colour
+         final[p] = data[o];
+         if (o * 8 >= databits)
+            colour[p] = QR_TAG_PAD;
+         else if (o * 8 + 7 >= databits)
+            colour[p] = QR_TAG_PAD + QR_TAG_DATA;
+         else
+            colour[p] = QR_TAG_DATA;
+         p++;
+      }
       for (q = 0; q < datas; q++)
          for (n = 0; n < blocks; n++)
-         {
-            int o = datas * n + (n > datan ? n - datan : 0) + q;
-            final[p] = data[o];
-            if (o * 8 >= databits)
-               colour[p] = QR_TAG_PAD;
-            else if (o * 8 + 7 >= databits)
-               colour[p] = QR_TAG_PAD + QR_TAG_DATA;
-            else
-               colour[p] = QR_TAG_DATA;
-            p++;
-         }
+            add(datas * n + (n > datan ? n - datan : 0) + q);
       for (n = datan; n < blocks; n++)
-         final[p++] = data[datas * datan + (datas + 1) * (n - datan) + datas];
+         add(datas * datan + (datas + 1) * (n - datan) + datas);
       p = 0;
       for (n = 0; n < blocks; n++)
       {
@@ -752,13 +752,13 @@ ui8 *qr_encode_opts(
       {
          if (!grid[(w + q + q) * (y + q) + (x + q)])
          {                      // Store a bit
-            int v = 0;
+            int v = QR_TAG_PAD;
             if (n < dataptr)
             {
                v = colour[n];
                if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA))
                   v = ((7 - b >= (databits & 7)) ? QR_TAG_PAD : QR_TAG_DATA);   // Mid byte end of data
-               v |= (data[n] & (1 << b) ? 1 : 0);
+               v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
                b--;
                if (b < 0)
                {
@@ -766,7 +766,7 @@ ui8 *qr_encode_opts(
                   n++;
                }
             }
-            set(x, y, v);       // 4 marks as data
+            set(x, y, v);
          }
          if ((x > 6 ? x - 1 : x) & 1)
             x--;
