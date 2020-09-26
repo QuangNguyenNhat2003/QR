@@ -500,6 +500,7 @@ ui8 *qr_encode_opts(
          o.padlen--;
          continue;
       }
+      // Standard padding
       addbits(8, 0xEC);
       if (dataptr == total)
          break;
@@ -562,14 +563,14 @@ ui8 *qr_encode_opts(
          final[p] = data[o];
 #ifndef	FB
          if (o * 8 >= databits)
-         {
+         {                      // Whole byte pad
+            colour[p] = QR_TAG_PAD;
             if (padmap && o < total && p < total)
                padmap[p] = o - (databits + 7) / 8;
-            colour[p] = QR_TAG_PAD;
          } else if (o * 8 + 7 >= databits)
-            colour[p] = QR_TAG_PAD + QR_TAG_DATA;
+            colour[p] = QR_TAG_PAD + QR_TAG_DATA;       // Mixed pad and data
          else
-            colour[p] = QR_TAG_DATA;
+            colour[p] = QR_TAG_DATA;    // Whole byte data
 #endif
          p++;
       }
@@ -784,11 +785,11 @@ ui8 *qr_encode_opts(
             if (n < dataptr)
             {
 #ifndef	FB
-               if (o.padmap && padmap[n] >= 0)
-                  (*o.padmap)[p] = padmap[n] * 8 + b;
                v = colour[n];
                if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b < (databits & 7))
                   v &= ~QR_TAG_PAD;     // DATA only
+               if (o.padmap && n < total && padmap[n] >= 0)
+                  (*o.padmap)[p] = padmap[n] * 8 + b;
 #endif
                v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
                b--;
