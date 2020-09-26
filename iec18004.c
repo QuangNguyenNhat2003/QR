@@ -512,6 +512,7 @@ ui8 *qr_encode_opts(
    }
    fprintf(stderr, " (%02X %d)\n", n, n);
 #endif
+   ui8 *colour = NULL;
    // Add ECC
    {
       int blocks = eccbytes[o.ver - 1][ecl + 4];
@@ -536,6 +537,8 @@ ui8 *qr_encode_opts(
       ui8 *final = malloc(total + ecctotal);
       if (!final)
          return NULL;
+      if (!(colour = malloc(total + ecctotal)))
+         return NULL;
       int datas = total / blocks;
       int datan = blocks - (total - datas * blocks);
 #ifdef DEBUG
@@ -545,7 +548,17 @@ ui8 *qr_encode_opts(
           q = 0;
       for (q = 0; q < datas; q++)
          for (n = 0; n < blocks; n++)
-            final[p++] = data[datas * n + (n > datan ? n - datan : 0) + q];
+         {
+            int o = datas * n + (n > datan ? n - datan : 0) + q;
+            final[p] = data[o];
+            if (o * 8 >= databits)
+               colour[p] = QR_TAG_PAD;
+            else if (o * 8 + 7 >= databits)
+               colour[p] = QR_TAG_PAD + QR_TAG_DATA;
+            else
+               colour[p] = QR_TAG_DATA;
+            p++;
+         }
       for (n = datan; n < blocks; n++)
          final[p++] = data[datas * datan + (datas + 1) * (n - datan) + datas];
       p = 0;
@@ -557,7 +570,11 @@ ui8 *qr_encode_opts(
 #endif
                      datas, data + p, ecc);
          for (q = 0; q < eccsize; q++)
-            final[total + n + q * blocks] = ecc[q];
+         {
+            int o = total + n + q * blocks;
+            final[o] = ecc[q];
+            colour[o] = QR_TAG_ECC;
+         }
          p += datas;
          if (n + 1 == datan)
             datas++;
@@ -735,14 +752,12 @@ ui8 *qr_encode_opts(
       {
          if (!grid[(w + q + q) * (y + q) + (x + q)])
          {                      // Store a bit
-            int v = QR_TAG_DATA;        // Mark as data
+            int v = 0;
             if (n < dataptr)
             {
-               // Work out if data, padding or ECC
-               if (n >= total)
-                  v |= QR_TAG_ECC;
-               else if (n * 8 + 7 - b >= databits)
-                  v |= QR_TAG_PAD;
+               v = colour[n];
+               if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA))
+                  v = ((7 - b >= (databits & 7)) ? QR_TAG_PAD : QR_TAG_DATA);   // Mid byte end of data
                v |= (data[n] & (1 << b) ? 1 : 0);
                b--;
                if (b < 0)
@@ -841,6 +856,7 @@ ui8 *qr_encode_opts(
                grid[(w + q + q) * (y + q) + (x + q)] ^= getmask(x, y, o.mask);
    }
    setfcode(o.mask);
+   free(colour);
    free(data);
    free(mode);
    if (o.widthp)
