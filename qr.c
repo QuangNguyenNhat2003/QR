@@ -125,7 +125,7 @@ int main(int argc, const char *argv[])
       { "mm", 0, POPT_ARG_DOUBLE, &scale, 0, "Size of pixels", "mm" },
       { "dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi" },
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
-      { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", "X X X/XXXX/... or $var or @file" },
+      { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", ".X./X.X pattern or $var or @file" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
       { "right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right" },
       { "left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left" },
@@ -274,9 +274,9 @@ int main(int argc, const char *argv[])
          int x = sx;
          while (*o && *o != '\n' && *o != '/')
          {
-            if (x >= 0 && x < W && y >= 0 && y < H && (b = padmap[y * W + x]) >= 0)
+            if (*o != ' ' && x >= 0 && x < W && y >= 0 && y < H && (b = padmap[y * W + x]) >= 0)
             {
-               if (*o == ' ' || *o == '.')
+               if (*o == '.')
                {                // Space
                   if ((grid[y * W + x] & QR_TAG_BLACK))
                      pad[b / 8] ^= (1 << (b & 7));
@@ -288,12 +288,6 @@ int main(int argc, const char *argv[])
             }
             x++;
             o++;
-         }
-         while (x < W && x < sx + ow)
-         {
-            if ((b = padmap[y * W + x]) >= 0 && (grid[y * W + x] & QR_TAG_BLACK))
-               pad[b / 8] ^= (1 << (b & 7));
-            x++;
          }
          if ((*o == '\n' && !o[1]) || !*o++)
             break;
