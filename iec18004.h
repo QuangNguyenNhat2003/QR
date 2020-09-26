@@ -20,7 +20,7 @@ typedef struct {
    const char *data;            // Data (can include nulls if required)
    unsigned char ver;           // Size of QR code (units) 1-40, or 0 for auto
    char ecl;                    // Error correction level L/M/Q/H, 0 is L (or better if same size code)
-   unsigned char mask;          // Masking code 1-8 for modes 0-7, 0 for auto
+   unsigned char mask;          // Masking code '0'-'7'
    const char *mode;            // Character mode string
    unsigned int *widthp;        // Return width
    unsigned int eci;            // Coding indicator (0=auto)
@@ -30,6 +30,10 @@ typedef struct {
    unsigned char noquiet:1;     // No quiet space included
    unsigned int padlen;         // Length of raw padding data to use
    const unsigned char *pad;    // Raw padding data to use
+   unsigned char *verp;         // Return version used
+   char *eclp;                  // Return ecl used
+   unsigned char *maskp;        // Return mask used
+   short **padmap;              // Return malloc'd map of bits for padding
 } qr_encode_t;
 #define	qr_encode(...)	qr_encode_opts((qr_encode_t){__VA_ARGS__})
 unsigned char *qr_encode_opts(qr_encode_t);

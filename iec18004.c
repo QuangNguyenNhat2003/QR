@@ -42,8 +42,8 @@ typedef unsigned char ui8;
 
 #endif
 
-// TODO Kanji mode - needs iconv UTF-8 to Shift JIS and then coding
-// TODO micro QR maybe
+// One day, maybe, Kanji mode - needs iconv UTF-8 to Shift JIS and then coding
+// Little point in micro QR as nothing much seems to read them
 
 static char alnum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
 
@@ -353,7 +353,7 @@ ui8 *qr_encode_opts(
          }
       }
       if (o.padlen)
-         count = (count + 7) / 8 * 8 + o.padlen * 8;    // Manual padding
+         count = (count + 7) / 8 * 8 + o.padlen * 8;    // Manual padding added
 #ifdef DEBUG
       fprintf(stderr, "Ver=%d Bits=%d (%d)\n", o.ver, count, (count + 7) / 8);
 #endif
@@ -498,6 +498,7 @@ ui8 *qr_encode_opts(
       {                         // Add custom padding data
          addbits(8, *o.pad++);
          o.padlen--;
+         continue;
       }
       addbits(8, 0xEC);
       if (dataptr == total)
@@ -513,6 +514,7 @@ ui8 *qr_encode_opts(
    fprintf(stderr, " (%02X %d)\n", n, n);
 #endif
 #ifndef	FB
+   short *padmap = NULL;
    ui8 *colour = NULL;
 #endif
    // Add ECC
@@ -542,6 +544,12 @@ ui8 *qr_encode_opts(
 #ifndef	FB
       if (!(colour = malloc(total + ecctotal)))
          return NULL;
+      if (o.padmap)
+      {
+         if (!(padmap = malloc(sizeof(*padmap) * total)))
+            return NULL;
+         memset(padmap, -1, sizeof(*padmap) * (total));
+      }
 #endif
       int datas = total / blocks;
       int datan = blocks - (total - datas * blocks);
@@ -554,8 +562,11 @@ ui8 *qr_encode_opts(
          final[p] = data[o];
 #ifndef	FB
          if (o * 8 >= databits)
+         {
+            if (padmap && o < total && p < total)
+               padmap[p] = o - (databits + 7) / 8;
             colour[p] = QR_TAG_PAD;
-         else if (o * 8 + 7 >= databits)
+         } else if (o * 8 + 7 >= databits)
             colour[p] = QR_TAG_PAD + QR_TAG_DATA;
          else
             colour[p] = QR_TAG_DATA;
@@ -751,6 +762,14 @@ ui8 *qr_encode_opts(
    }
    // Load data (o.masked)
    {
+#ifndef 	FB
+      if (o.padmap)
+      {
+         if (!((*o.padmap) = malloc(sizeof(*o.padmap) * (w + q + q) * (w + q + q))))
+            return NULL;
+         memset(*o.padmap, -1, sizeof(*o.padmap) * (w + q + q) * (w + q + q));
+      }
+#endif
       int u = 1;
       int b = 7;
       int x = w - 1;
@@ -758,12 +777,15 @@ ui8 *qr_encode_opts(
       n = 0;
       while (x >= 0 && y >= 0)
       {
-         if (!grid[(w + q + q) * (y + q) + (x + q)])
+         int p = (w + q + q) * (y + q) + (x + q);
+         if (!grid[p])
          {                      // Store a bit
             int v = QR_TAG_PAD;
             if (n < dataptr)
             {
 #ifndef	FB
+               if (o.padmap && padmap[n] >= 0)
+                  (*o.padmap)[p] = padmap[n] * 8 + b;
                v = colour[n];
                if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b < (databits & 7))
                   v &= ~QR_TAG_PAD;     // DATA only
@@ -868,11 +890,19 @@ ui8 *qr_encode_opts(
    setfcode(o.mask);
 #ifndef	FB
    free(colour);
+   if (padmap)
+      free(padmap);
 #endif
    free(data);
    free(mode);
    if (o.widthp)
       *o.widthp = w + q + q;
+   if (o.verp)
+      *o.verp = o.ver;
+   if (o.maskp)
+      *o.maskp = '0' + (o.mask & 7);
+   if (o.eclp)
+      *o.eclp = ecl;
    return grid;
 }
 
