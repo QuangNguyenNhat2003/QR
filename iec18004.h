@@ -33,6 +33,7 @@ typedef struct {
    unsigned char *verp;         // Return version used
    char *eclp;                  // Return ecl used
    unsigned char *maskp;        // Return mask used
+   char **modep;                // Return mode string
    short **padmap;              // Return malloc'd map of bits for padding
 } qr_encode_t;
 #define	qr_encode(...)	qr_encode_opts((qr_encode_t){__VA_ARGS__})

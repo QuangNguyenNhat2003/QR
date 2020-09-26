@@ -199,11 +199,12 @@ int main(int argc, const char *argv[])
    char ecl = 0;
    if (eccstr && *eccstr && !strchr("LMQH", ecl = toupper(*eccstr)))
       errx(1, "ECC mode unknown");
+   char *newmode = NULL;
+   char newmask = 0,
+       newecl = 0;
+   unsigned char newver = 0;
    if (overlay)
    {                            // Overlay in padding
-      char newmask = 0,
-          newecl = 0;
-      unsigned char newver = 0;
       short *padmap = NULL;
       unsigned char pad[3000];
       {                         // Let's random pad around the overlay
@@ -269,10 +270,10 @@ int main(int argc, const char *argv[])
          y++;
       }
       free(grid);
-    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad:pad);
+    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, modep:&newmode);
    } else
    {                            // Simple
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad:pad);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep:&newmode);
       H = W;
    }
 
@@ -281,10 +282,14 @@ int main(int argc, const char *argv[])
       errx(1, "No barcode produced\n");
    switch (tolower(*format))
    {
-   case 'i':                   // info - just do size
-      printf("%d", W);
+   case 'i':                   // info 
+      printf("Version:	%d\n", newver);
+      printf("ECL:		%c\n", newecl);
+      printf("Mask:		%c\n", newmask);
+      printf("Size:		%d\n", W);
+      printf("Encoding:	%s\n", newmode);
       break;
-   case 'x':                   // size - include space - but it is mandatory
+   case 'x':                   // size - include space
       printf("%d", W);
       break;
    case 'h':                   // hex

@@ -257,13 +257,13 @@ ui8 *qr_encode_opts(
 #endif
                       qr_encode_t o)
 {                               // Return (malloced) byte array width*width wide (includes mandatory quiet zone)
+   static const char ecls[] = "LMQH";
    int n;
    if (o.widthp)
       *o.widthp = 0;
    int ecl = 0;
    if (o.ecl)
    {
-      static const char ecls[] = "LMQH";
       const char *e = strchr(ecls, toupper(o.ecl));
       if (!e)
          return NULL;           // Invalid
@@ -894,7 +894,10 @@ ui8 *qr_encode_opts(
       free(padmap);
 #endif
    free(data);
-   free(mode);
+   if (o.modep)
+      *o.modep = mode;
+   else
+      free(mode);
    if (o.widthp)
       *o.widthp = w + q + q;
    if (o.verp)
@@ -902,7 +905,7 @@ ui8 *qr_encode_opts(
    if (o.maskp)
       *o.maskp = '0' + (o.mask & 7);
    if (o.eclp)
-      *o.eclp = ecl;
+      *o.eclp = ecls[ecl];
    return grid;
 }
 
