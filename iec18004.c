@@ -512,7 +512,9 @@ ui8 *qr_encode_opts(
    }
    fprintf(stderr, " (%02X %d)\n", n, n);
 #endif
+#ifndef	FB
    ui8 *colour = NULL;
+#endif
    // Add ECC
    {
       int blocks = eccbytes[o.ver - 1][ecl + 4];
@@ -537,8 +539,10 @@ ui8 *qr_encode_opts(
       ui8 *final = malloc(total + ecctotal);
       if (!final)
          return NULL;
+#ifndef	FB
       if (!(colour = malloc(total + ecctotal)))
          return NULL;
+#endif
       int datas = total / blocks;
       int datan = blocks - (total - datas * blocks);
 #ifdef DEBUG
@@ -548,12 +552,14 @@ ui8 *qr_encode_opts(
           q = 0;
       void add(int o) {         // Add byte and set colour
          final[p] = data[o];
+#ifndef	FB
          if (o * 8 >= databits)
             colour[p] = QR_TAG_PAD;
          else if (o * 8 + 7 >= databits)
             colour[p] = QR_TAG_PAD + QR_TAG_DATA;
          else
             colour[p] = QR_TAG_DATA;
+#endif
          p++;
       }
       for (q = 0; q < datas; q++)
@@ -573,7 +579,9 @@ ui8 *qr_encode_opts(
          {
             int o = total + n + q * blocks;
             final[o] = ecc[q];
+#ifndef	FB
             colour[o] = QR_TAG_ECC;
+#endif
          }
          p += datas;
          if (n + 1 == datan)
@@ -755,9 +763,11 @@ ui8 *qr_encode_opts(
             int v = QR_TAG_PAD;
             if (n < dataptr)
             {
+#ifndef	FB
                v = colour[n];
-               if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA))
-                  v = ((7 - b >= (databits & 7)) ? QR_TAG_PAD : QR_TAG_DATA);   // Mid byte end of data
+               if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b >= (databits & 7))
+                  v &= ~QR_TAG_DATA;    // PAD only
+#endif
                v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
                b--;
                if (b < 0)
@@ -856,7 +866,9 @@ ui8 *qr_encode_opts(
                grid[(w + q + q) * (y + q) + (x + q)] ^= getmask(x, y, o.mask);
    }
    setfcode(o.mask);
+#ifndef	FB
    free(colour);
+#endif
    free(data);
    free(mode);
    if (o.widthp)
