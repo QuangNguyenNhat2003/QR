@@ -741,10 +741,9 @@ ui8 *qr_encode_opts(
             if (n < dataptr)
             {
                // Work out if data, padding or ECC
-               int q = n % blocksize;
-               if (q >= datasize)
+	       if(n>=total)
                   v |= QR_TAG_ECC;
-               else if (((n / blocksize) * datasize + q) * 8 + 7 - b >= databits)
+	       else if(n*8+7-b>=databits)
                   v |= QR_TAG_PAD;
                v |= (data[n] & (1 << b) ? 1 : 0);
                b--;
