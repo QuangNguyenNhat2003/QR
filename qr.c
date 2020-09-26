@@ -312,7 +312,7 @@ int main(int argc, const char *argv[])
                      o += 8;
                   else if (u & QR_TAG_SET)
                      o += 10;
-                  ImagePixel(i, x, (H * S) - y - 1)=o;
+                  ImagePixel(i, x, (H * S) - y - 1) = o;
                }
          } else
          {

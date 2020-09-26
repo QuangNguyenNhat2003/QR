@@ -744,7 +744,7 @@ ui8 *qr_encode_opts(
                int q = n % blocksize;
                if (q >= datasize)
                   v |= QR_TAG_ECC;
-               else if (((n / blocksize) * datasize + q) * 8 + b >= databits)
+               else if (((n / blocksize) * datasize + q) * 8 + 7 - b >= databits)
                   v |= QR_TAG_PAD;
                v |= (data[n] & (1 << b) ? 1 : 0);
                b--;
