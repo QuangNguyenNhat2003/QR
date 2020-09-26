@@ -404,6 +404,7 @@ ui8 *qr_encode_opts(
    unsigned long long v = 0;
    unsigned int b = 0;
    void addbits(int bits, unsigned long long value) {   // Build up the data string
+      value &= ((1 << bits) - 1);
       v = ((v << bits) | value);
       b += bits;
       while (b >= 8)
@@ -492,7 +493,7 @@ ui8 *qr_encode_opts(
    if (b)
    {
       if (o.padlen)
-         addbits(8 - b, (*o.pad++) << b);       // pad to byte
+         addbits(8 - b, *o.pad++);      // pad to byte
       else
          addbits(8 - b, 0);     // pad to byte
    }
