@@ -765,8 +765,8 @@ ui8 *qr_encode_opts(
             {
 #ifndef	FB
                v = colour[n];
-               if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b >= (databits & 7))
-                  v &= ~QR_TAG_DATA;    // PAD only
+               if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b < (databits & 7))
+                  v &= ~QR_TAG_PAD;     // DATA only
 #endif
                v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
                b--;
