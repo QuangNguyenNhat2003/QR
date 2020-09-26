@@ -513,12 +513,10 @@ ui8 *qr_encode_opts(
    fprintf(stderr, " (%02X %d)\n", n, n);
 #endif
    // Add ECC
-   int blocks = eccbytes[o.ver - 1][ecl + 4];
-   int ecctotal = eccbytes[o.ver - 1][ecl];
-   int eccsize = ecctotal / blocks;
-   int blocksize = (total + ecctotal) / blocks;
-   int datasize = total / blocks;
-   {                            // Work out the ECC data
+   {
+      int blocks = eccbytes[o.ver - 1][ecl + 4];
+      int ecctotal = eccbytes[o.ver - 1][ecl];
+      int eccsize = ecctotal / blocks;
       if (eccsize * blocks != ecctotal)
       {
          free(mode);
@@ -741,9 +739,9 @@ ui8 *qr_encode_opts(
             if (n < dataptr)
             {
                // Work out if data, padding or ECC
-	       if(n>=total)
+               if (n >= total)
                   v |= QR_TAG_ECC;
-	       else if(n*8+7-b>=databits)
+               else if (n * 8 + 7 - b >= databits)
                   v |= QR_TAG_PAD;
                v |= (data[n] & (1 << b) ? 1 : 0);
                b--;
