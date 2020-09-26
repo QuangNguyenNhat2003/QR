@@ -215,8 +215,13 @@ int main(int argc, const char *argv[])
             errx(1, "Cannot read urandom");
          close(f);
       }
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad:pad);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad:pad);
       H = W;
+      if (!mask)
+      {                         // Work out a mask based on the random pad
+         free(grid);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padlen: sizeof(pad), pad:pad);
+      }
       // Find size of overlap
       int ow = 0,
           oh = 0;
@@ -270,7 +275,7 @@ int main(int argc, const char *argv[])
          y++;
       }
       free(grid);
-    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, modep:&newmode);
+    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, modep:&newmode);
    } else
    {                            // Simple
     grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep:&newmode);
