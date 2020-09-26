@@ -8,6 +8,13 @@ enum {                          // Error Correction Level
    QR_ECL_H = 'H',              // 10
 };
 
+#define	QR_TAG_BLACK	1       // Value is black
+#define	QR_TAG_FIXED	2       // Value is fixed (unfixed is data or control)
+#define	QR_TAG_DATA	4       // Value is data of some sort (including ECC and padding)
+#define	QR_TAG_ECC	8       // Value is ECC data
+#define	QR_TAG_PAD	16      // Value is padding data
+#define	QR_TAG_SET	128     // Value is defined (otherwise is quiet)
+
 typedef struct {
    int len;                     // Data length
    const char *data;            // Data (can include nulls if required)

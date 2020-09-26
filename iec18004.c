@@ -488,6 +488,7 @@ ui8 *qr_encode_opts(
    }
    if (dataptr < total)
       addbits(4, 0);            // terminator
+   unsigned int databits = dataptr * 8 + b;
    if (b)
       addbits(8 - b, 0);        // pad to byte
    // Padding bytes
@@ -495,7 +496,7 @@ ui8 *qr_encode_opts(
    {
       if (o.padlen)
       {                         // Add custom padding data
-         addbits(8,*o.pad++);
+         addbits(8, *o.pad++);
          o.padlen--;
       }
       addbits(8, 0xEC);
@@ -512,10 +513,12 @@ ui8 *qr_encode_opts(
    fprintf(stderr, " (%02X %d)\n", n, n);
 #endif
    // Add ECC
-   {
-      int blocks = eccbytes[o.ver - 1][ecl + 4];
-      int ecctotal = eccbytes[o.ver - 1][ecl];
-      int eccsize = ecctotal / blocks;
+   int blocks = eccbytes[o.ver - 1][ecl + 4];
+   int ecctotal = eccbytes[o.ver - 1][ecl];
+   int eccsize = ecctotal / blocks;
+   int blocksize = (total + ecctotal) / blocks;
+   int datasize = total / blocks;
+   {                            // Work out the ECC data
       if (eccsize * blocks != ecctotal)
       {
          free(mode);
@@ -585,13 +588,13 @@ ui8 *qr_encode_opts(
    memset(grid, 0, (w + q + q) * (w + q + q));
    inline void set(int x, int y, int v) {
       if (x >= 0 && x < w && y >= 0 && y < w)
-         grid[(w + q + q) * (y + q) + (x + q)] = (v | 128);
+         grid[(w + q + q) * (y + q) + (x + q)] = (v | QR_TAG_SET);
    }
    inline void black(int x, int y) {
-      set(x, y, 1 + 2);         // 2 is marking fixed marks
+      set(x, y, 1 + QR_TAG_FIXED);      // 2 is marking fixed marks
    }
    inline void white(int x, int y) {
-      set(x, y, 0 + 2);         // 2 is marking fixed marks
+      set(x, y, 0 + QR_TAG_FIXED);      // 2 is marking fixed marks
    }
    // Corners
    void target(int x, int y) {
@@ -734,10 +737,16 @@ ui8 *qr_encode_opts(
       {
          if (!grid[(w + q + q) * (y + q) + (x + q)])
          {                      // Store a bit
-            int v = 0;
+            int v = QR_TAG_DATA;        // Mark as data
             if (n < dataptr)
             {
-               v = (data[n] & (1 << b) ? 1 : 0);
+               // Work out if data, padding or ECC
+               int q = n % blocksize;
+               if (q >= datasize)
+                  v |= QR_TAG_ECC;
+               else if (((n / blocksize) * datasize + q) * 8 + b >= databits)
+                  v |= QR_TAG_PAD;
+               v |= (data[n] & (1 << b) ? 1 : 0);
                b--;
                if (b < 0)
                {
@@ -745,7 +754,7 @@ ui8 *qr_encode_opts(
                   n++;
                }
             }
-            set(x, y, 4 + v);   // 4 marks as data
+            set(x, y, v);       // 4 marks as data
          }
          if ((x > 6 ? x - 1 : x) & 1)
             x--;

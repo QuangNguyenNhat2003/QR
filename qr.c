@@ -284,18 +284,36 @@ int main(int argc, const char *argv[])
          Image *i;
          if (*format == 'P')
          {                      // Special mode to make coloured QR code with different logical parts
-            i = ImageNew(W * S, H * S, 8);
-            i->Colour[0] = 0xFFFFFF;
+            i = ImageNew(W * S, H * S, 12);
+            i->Colour[0] = 0xFFFF88;    // Quiet
             i->Colour[1] = 0x000000;
-            i->Colour[2] = 0xFFFFCC;
-            i->Colour[3] = 0x000044;
-            i->Colour[4] = 0xFFCCFF;
+            i->Colour[2] = 0xFFCCCC;    // ECC
+            i->Colour[3] = 0x440000;
+            i->Colour[4] = 0xCCFFCC;    // PAD
             i->Colour[5] = 0x004400;
-            i->Colour[6] = 0xFFCCCC;
-            i->Colour[7] = 0x004444;
+            i->Colour[6] = 0xCCCCFF;    // DATA
+            i->Colour[7] = 0x000044;
+            i->Colour[8] = 0xFFFFFF;    // FIXED
+            i->Colour[9] = 0x000000;
+            i->Colour[10] = 0xCCCCCC;   // FORMAT
+            i->Colour[11] = 0x444444;
             for (y = 0; y < H * S; y++)
                for (x = 0; x < W * S; x++)
-                  ImagePixel(i, x, (H * S) - y - 1) = (grid[(H - 1 - y / S) * W + (x / S)] & 7);
+               {
+                  unsigned char u = grid[(H - 1 - y / S) * W + (x / S)],
+                      o = (u & 1);
+                  if (u & QR_TAG_ECC)
+                     o += 2;
+                  else if (u & QR_TAG_PAD)
+                     o += 4;
+                  else if (u & QR_TAG_DATA)
+                     o += 6;
+                  else if (u & QR_TAG_FIXED)
+                     o += 8;
+                  else if (u & QR_TAG_SET)
+                     o += 10;
+                  ImagePixel(i, x, (H * S) - y - 1)=o;
+               }
          } else
          {
             i = ImageNew(W * S, H * S, 2);
