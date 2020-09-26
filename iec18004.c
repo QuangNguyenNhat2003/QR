@@ -353,7 +353,7 @@ ui8 *qr_encode_opts(
          }
       }
       if (o.padlen)
-         count = (count + 7) / 8 * 8 + o.padlen * 8;    // Manual padding added
+         count = count / 8 * 8 + o.padlen * 8;  // Manual padding added
 #ifdef DEBUG
       fprintf(stderr, "Ver=%d Bits=%d (%d)\n", o.ver, count, (count + 7) / 8);
 #endif
@@ -490,7 +490,12 @@ ui8 *qr_encode_opts(
       addbits(4, 0);            // terminator
    unsigned int databits = dataptr * 8 + b;
    if (b)
-      addbits(8 - b, 0);        // pad to byte
+   {
+      if (o.padlen)
+         addbits(8 - b, (*o.pad++)<<b);      // pad to byte
+      else
+         addbits(8 - b, 0);     // pad to byte
+   }
    // Padding bytes
    while (dataptr < total)
    {
@@ -566,7 +571,7 @@ ui8 *qr_encode_opts(
          {                      // Whole byte pad
             colour[p] = QR_TAG_PAD;
             if (padmap && o < total && p < total)
-               padmap[p] = o - (databits + 7) / 8;
+               padmap[p] = o - databits / 8;
          } else if (o * 8 + 7 >= databits)
             colour[p] = QR_TAG_PAD + QR_TAG_DATA;       // Mixed pad and data
          else
@@ -788,7 +793,7 @@ ui8 *qr_encode_opts(
                v = colour[n];
                if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b < (databits & 7))
                   v &= ~QR_TAG_PAD;     // DATA only
-               if (o.padmap && n < total && padmap[n] >= 0)
+               if (o.padmap && (v & QR_TAG_PAD) && n < total && padmap[n] >= 0)
                   (*o.padmap)[p] = padmap[n] * 8 + b;
 #endif
                v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
