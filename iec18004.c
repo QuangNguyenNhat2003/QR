@@ -630,9 +630,17 @@ ui8 *qr_encode_opts(
    inline int gridxy(int x, int y) {
       x += q;
       y += q;
-      if (o.rotate)
+      switch (o.rotate)
+      {
+      case 0:
+         return (w + q + q) * y + x;
+      case 1:
          return (w + q + q) * (w + q + q - 1 - x) + y;
-      return (w + q + q) * y + x;
+      case 2:
+         return (w + q + q) * (w + q + q - 1 - y) + (w + q + q - 1 - x);
+      case 3:
+         return (w + q + q) * x + (w + q + q - 1 - y);
+      }
    }
    inline void set(int x, int y, int v) {
       if (x >= 0 && x < w && y >= 0 && y < w)

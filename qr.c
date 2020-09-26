@@ -127,7 +127,8 @@ int main(int argc, const char *argv[])
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
       { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", "X X X/XXXX/... or $var or @file" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
-      { "rotate", 'r', POPT_ARG_NONE, &rotate, 0, "Rotate" },
+      { "right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right" },
+      { "left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left" },
       { "format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg" },
       POPT_AUTOHELP {
