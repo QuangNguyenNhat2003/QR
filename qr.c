@@ -124,7 +124,7 @@ int main(int argc, const char *argv[])
       { "mm", 0, POPT_ARG_DOUBLE, &scale, 0, "Size of pixels", "mm" },
       { "dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi" },
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
-      { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", "X X X/XXXX/..." },
+      { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", "X X X/XXXX/... or $var or @file" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
       { "format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg" },
@@ -205,6 +205,23 @@ int main(int argc, const char *argv[])
    unsigned char newver = 0;
    if (overlay)
    {                            // Overlay in padding
+      if (*overlay == '$' && !(overlay = getenv(overlay + 1)))
+         errx(1, "No overlay");
+      else if (*overlay == '@')
+      {
+         struct stat s;
+         if (stat(overlay + 1, &s) < 0)
+            err(1, "Cannot access %s", overlay + 1);
+         if (s.st_size > 50000)
+            errx(1, "Silly size overlay");
+         int i = open(overlay + 1, O_RDONLY);
+         if (i < 0)
+            err(1, "Cannot open %s", overlay + 1);
+         if (read(i, overlay = malloc(s.st_size + 1), s.st_size) != s.st_size)
+            err(1, "Read fail");
+         close(i);
+         overlay[s.st_size] = 0;
+      }
       short *padmap = NULL;
       unsigned char pad[3000];
       {                         // Let's random pad around the overlay
@@ -238,8 +255,13 @@ int main(int argc, const char *argv[])
             if (!*o++)
                break;
          }
+      int q = (noquiet ? 0 : 4);
       int sx = (W - ow) / 2,
           sy = (H - oh) / 2;
+      if (sy < q)
+         sy = q;
+      if (sx < q)
+         sx = q;
       // Remap the mask
       int y = sy;
       o = overlay;
