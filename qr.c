@@ -254,7 +254,7 @@ int main(int argc, const char *argv[])
             if (o - l > ow)
                ow = o - l;
             oh++;
-            if (!*o++)
+            if ((*o == '\n' && !o[1]) || !*o++)
                break;
          }
       int q = (noquiet ? 0 : 4);
@@ -294,7 +294,7 @@ int main(int argc, const char *argv[])
                pad[b / 8] ^= (1 << (b & 7));
             x++;
          }
-         if (!*o++)
+         if ((*o == '\n' && !o[1]) || !*o++)
             break;
          y++;
       }
