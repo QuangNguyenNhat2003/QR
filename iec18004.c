@@ -352,6 +352,8 @@ ui8 *qr_encode_opts(
             return -1;          // Invalid
          }
       }
+      if (o.padlen)
+         count = (count + 7) / 8 * 8 + o.padlen * 8;    // Manual padding
 #ifdef DEBUG
       fprintf(stderr, "Ver=%d Bits=%d (%d)\n", o.ver, count, (count + 7) / 8);
 #endif
@@ -491,6 +493,11 @@ ui8 *qr_encode_opts(
    // Padding bytes
    while (dataptr < total)
    {
+      if (o.padlen)
+      {                         // Add custom padding data
+         addbits(8,*o.pad++);
+         o.padlen--;
+      }
       addbits(8, 0xEC);
       if (dataptr == total)
          break;
