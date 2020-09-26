@@ -353,7 +353,7 @@ ui8 *qr_encode_opts(
          }
       }
       if (o.padlen)
-         count = count / 8 * 8 + o.padlen * 8;  // Manual padding added
+         count = (count + 4 + 7) / 8 * 8 + (o.padlen - 1) * 8;  // Manual padding added, and 0000
 #ifdef DEBUG
       fprintf(stderr, "Ver=%d Bits=%d (%d)\n", o.ver, count, (count + 7) / 8);
 #endif
@@ -496,6 +496,10 @@ ui8 *qr_encode_opts(
          addbits(8 - b, *o.pad++);      // pad to byte
       else
          addbits(8 - b, 0);     // pad to byte
+   } else if (o.padlen)
+   {                            // For consistency first pad byte is always covering any partial, and first whole pad byte is at +1
+      o.padlen--;
+      o.pad++;
    }
    // Padding bytes
    while (dataptr < total)
@@ -575,8 +579,8 @@ ui8 *qr_encode_opts(
             colour[p] = QR_TAG_PAD + QR_TAG_DATA;       // Mixed pad and data
          else
             colour[p] = QR_TAG_DATA;    // Whole byte data
-         if (padmap && o < total && p < total && o >= databits / 8)
-            padmap[p] = o - databits / 8;       // Map which byte of padding this relates to
+         if (padmap && o < total && p < total && o >= (databits - 1) / 8)
+            padmap[p] = o - (databits - 1) / 8; // Map which byte of padding this relates to
 #endif
          p++;
       }

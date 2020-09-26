@@ -30,7 +30,7 @@ typedef struct {
    unsigned char noquiet:1;     // No quiet space included
    unsigned char rotate:2;      // Rotate image
    unsigned int padlen;         // Length of raw padding data to use
-   const unsigned char *pad;    // Raw padding data to use
+   const unsigned char *pad;    // Raw padding data to use (first byte is partial, first whole byte is at +1)
    unsigned char *verp;         // Return version used
    char *eclp;                  // Return ecl used
    unsigned char *maskp;        // Return mask used

@@ -227,13 +227,11 @@ int main(int argc, const char *argv[])
       }
       short *padmap = NULL;
       unsigned char pad[3000];
-      {                         // Let's random pad around the overlay
-         int f = open("/dev/urandom", O_RDONLY);
-         if (f < 0)
-            err(1, "Cannot open urandom");
-         if (read(f, pad, sizeof(pad)) != sizeof(pad))
-            errx(1, "Cannot read urandom");
-         close(f);
+      for (int i = 1; i < sizeof(pad); i += 2)
+      {                         // Standard padding
+         pad[i] = 0xEC;
+         if (i + 1 < sizeof(pad))
+            pad[i + 1] = 0x11;
       }
     grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, rotate:rotate);
       H = W;
