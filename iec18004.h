@@ -28,6 +28,7 @@ typedef struct {
    unsigned char sam;           // Structured append 1-16 index
    unsigned char san;           // Structured append 1-16 total
    unsigned char noquiet:1;     // No quiet space included
+   unsigned char rotate:1;      // Rotate image
    unsigned int padlen;         // Length of raw padding data to use
    const unsigned char *pad;    // Raw padding data to use
    unsigned char *verp;         // Return version used

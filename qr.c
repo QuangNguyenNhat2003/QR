@@ -90,6 +90,7 @@ int main(int argc, const char *argv[])
    int san = 0;
    int formatcode = 0;
    int noquiet = 0;
+   int rotate = 0;
    double scale = -1,
        dpi = -1;
    int S = -1;
@@ -126,6 +127,7 @@ int main(int argc, const char *argv[])
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
       { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", "X X X/XXXX/... or $var or @file" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
+      { "rotate", 'r', POPT_ARG_NONE, &rotate, 0, "Rotate" },
       { "format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg" },
       POPT_AUTOHELP {
@@ -232,12 +234,12 @@ int main(int argc, const char *argv[])
             errx(1, "Cannot read urandom");
          close(f);
       }
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad:pad);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, rotate:rotate);
       H = W;
       if (!mask)
       {                         // Work out a mask based on the random pad
          free(grid);
-       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padlen: sizeof(pad), pad:pad);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padlen: sizeof(pad), pad: pad, rotate:rotate);
       }
       // Find size of overlap
       int ow = 0,
@@ -297,10 +299,10 @@ int main(int argc, const char *argv[])
          y++;
       }
       free(grid);
-    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, modep:&newmode);
+    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, modep: &newmode, rotate:rotate);
    } else
    {                            // Simple
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep:&newmode);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, rotate:rotate);
       H = W;
    }
 

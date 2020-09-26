@@ -492,7 +492,7 @@ ui8 *qr_encode_opts(
    if (b)
    {
       if (o.padlen)
-         addbits(8 - b, (*o.pad++)<<b);      // pad to byte
+         addbits(8 - b, (*o.pad++) << b);       // pad to byte
       else
          addbits(8 - b, 0);     // pad to byte
    }
@@ -568,14 +568,14 @@ ui8 *qr_encode_opts(
          final[p] = data[o];
 #ifndef	FB
          if (o * 8 >= databits)
-         {                      // Whole byte pad
+            // Whole byte pad
             colour[p] = QR_TAG_PAD;
-            if (padmap && o < total && p < total)
-               padmap[p] = o - databits / 8;
-         } else if (o * 8 + 7 >= databits)
+         else if (o * 8 + 7 >= databits)
             colour[p] = QR_TAG_PAD + QR_TAG_DATA;       // Mixed pad and data
          else
             colour[p] = QR_TAG_DATA;    // Whole byte data
+         if (padmap && o < total && p < total && o >= databits / 8)
+            padmap[p] = o - databits / 8;       // Map which byte of padding this relates to
 #endif
          p++;
       }
@@ -626,9 +626,16 @@ ui8 *qr_encode_opts(
       return NULL;
    }
    memset(grid, 0, (w + q + q) * (w + q + q));
+   inline int gridxy(int x, int y) {
+      x += q;
+      y += q;
+      if (o.rotate)
+         return (w + q + q) * (w + q + q - 1 - x) + y;
+      return (w + q + q) * y + x;
+   }
    inline void set(int x, int y, int v) {
       if (x >= 0 && x < w && y >= 0 && y < w)
-         grid[(w + q + q) * (y + q) + (x + q)] = (v | QR_TAG_SET);
+         grid[gridxy(x, y)] = (v | QR_TAG_SET);
    }
    inline void black(int x, int y) {
       set(x, y, 1 + QR_TAG_FIXED);      // 2 is marking fixed marks
@@ -783,8 +790,7 @@ ui8 *qr_encode_opts(
       n = 0;
       while (x >= 0 && y >= 0)
       {
-         int p = (w + q + q) * (y + q) + (x + q);
-         if (!grid[p])
+         if (!grid[gridxy(x, y)])
          {                      // Store a bit
             int v = QR_TAG_PAD;
             if (n < dataptr)
@@ -794,7 +800,7 @@ ui8 *qr_encode_opts(
                if ((v & (QR_TAG_PAD | QR_TAG_DATA)) == (QR_TAG_PAD | QR_TAG_DATA) && 7 - b < (databits & 7))
                   v &= ~QR_TAG_PAD;     // DATA only
                if (o.padmap && (v & QR_TAG_PAD) && n < total && padmap[n] >= 0)
-                  (*o.padmap)[p] = padmap[n] * 8 + b;
+                  (*o.padmap)[gridxy(x, y)] = padmap[n] * 8 + b;
 #endif
                v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
                b--;
@@ -854,8 +860,8 @@ ui8 *qr_encode_opts(
                for (y = 0; y < w; y++)
                {
                   int bit(int x, int y) {       // What colour would a bit be, masked if data
-                     int v = grid[(w + q + q) * (y + q) + (x + q)];
-                     if (v & 4)
+                     int v = grid[gridxy(x, y)];
+                     if (v & QR_TAG_DATA)
                         v ^= getmask(x, y, m);
                      return v & 1;
                   }
@@ -890,8 +896,8 @@ ui8 *qr_encode_opts(
       }
       for (x = 0; x < w; x++)
          for (y = 0; y < w; y++)
-            if (grid[(w + q + q) * (y + q) + (x + q)] & 4)      // data bit
-               grid[(w + q + q) * (y + q) + (x + q)] ^= getmask(x, y, o.mask);
+            if (grid[gridxy(x, y)] & QR_TAG_DATA)       // data bit
+               grid[gridxy(x, y)] ^= getmask(x, y, o.mask);
    }
    setfcode(o.mask);
 #ifndef	FB
@@ -914,51 +920,3 @@ ui8 *qr_encode_opts(
       *o.eclp = ecls[ecl];
    return grid;
 }
-
-#ifndef	LIB
-int main(int argc, const char *argv[])
-{                               // Test command line
-   int c;
-   poptContext optCon;          // context for parsing command-line options
-   const struct poptOption optionsTable[] = {
-      POPT_AUTOHELP {
-                      }
-   };
-   optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
-   //poptSetOtherOptionHelp (optCon, "");
-   if ((c = poptGetNextOpt(optCon)) < -1)
-      errx(1, "%s: %s\n", poptBadOption(optCon, POPT_BADOPTION_NOALIAS), poptStrerror(c));
-   if (poptPeekArg(optCon))
-   {
-      poptPrintUsage(optCon, stderr, 0);
-      return -1;
-   }
-   int w = 0;
-   ui8 *grid = qr_encode(8, "01234567", 0, QR_ECL_M, 3, 0, &w, 0, 0, 0, 0);
-   int y,
-    x;
-   if (grid)
-      for (y = 0; y < w; y++)
-      {
-         for (x = 0; x < w; x++)
-            printf(grid[y * w + x] == 3 ? "X " : grid[y * w + x] ? "  " : ". ");
-      }
-   printf("\n");
-   int n,
-    q,
-    max = 0;
-   for (n = 1; n <= 40; n++)
-   {
-      for (q = 0; q < 4; q++)
-      {
-         int w = eccbytes[n - 1][q];
-         int b = eccbytes[n - 1][q + 4];
-         int l = (w + b - 1) / b;
-         if (l > max)
-            max = l;
-      }
-   }
-   printf("Max ecc bytes %d\n", max);
-   return 0;
-}
-#endif
