@@ -20,7 +20,7 @@ typedef struct {
    const char *data;            // Data (can include nulls if required)
    unsigned char ver;           // Size of QR code (units) 1-40, or 0 for auto
    char ecl;                    // Error correction level L/M/Q/H, 0 is L (or better if same size code)
-   char mask;          // Masking code '0'-'7'
+   char mask;                   // Masking code '0'-'7'
    const char *mode;            // Character mode string
    unsigned int *widthp;        // Return width
    unsigned int eci;            // Coding indicator (0=auto)
@@ -31,9 +31,10 @@ typedef struct {
    unsigned char rotate:2;      // Rotate image
    unsigned int padlen;         // Length of raw padding data to use
    const unsigned char *pad;    // Raw padding data to use. First byte is always for partial byte, and final byte for stray bits in code
+   unsigned int minsize;        // Minimum size (goes for bigger ver if needed, even if ver specified smaller)
    unsigned char *verp;         // Return version used
    char *eclp;                  // Return ecl used
-   char *maskp;        // Return mask used
+   char *maskp;                 // Return mask used
    char **modep;                // Return mode string
    unsigned int *padlenp;       // Return number of pad bytes
    short **padmap;              // Return malloc'd map of bits for padding

@@ -251,6 +251,8 @@ static int getmask(int x, int y, int mask)
    return -1;
 }
 
+#define versize(v) ((v)*4+17)
+
 ui8 *qr_encode_opts(
 #ifdef	FB
                       heap_h heap,
@@ -259,8 +261,18 @@ ui8 *qr_encode_opts(
 {                               // Return (malloced) byte array width*width wide (includes mandatory quiet zone)
    static const char ecls[] = "LMQH";
    int n;
+   if (o.modep)
+      *o.modep = NULL;
    if (o.widthp)
       *o.widthp = 0;
+   if (o.verp)
+      *o.verp = 0;
+   if (o.maskp)
+      *o.maskp = 0;
+   if (o.eclp)
+      *o.eclp = 0;
+   if (o.padlenp)
+      *o.padlenp = 0;
    int ecl = 0;
    if (o.ecl)
    {
@@ -299,7 +311,7 @@ ui8 *qr_encode_opts(
    fprintf(stderr, "[%d] %.*s ver=%d ecl=%d mask=%d\n", o.len, o.len, o.data, o.ver, ecl, o.mask);
 #endif
    int bytes(int v) {
-      int a = v * 4 + 17;
+      int a = versize(v);
       int pn = 0,
           p = 0;
       if (v > 1)
@@ -384,6 +396,8 @@ ui8 *qr_encode_opts(
       free(mode);
       return NULL;
    }
+   while (versize(o.ver) < o.minsize && o.ver < 40)
+      o.ver++;
    if (!o.ecl)
    {                            // Can we do better ECL in same size?
       int count = bits();
@@ -619,7 +633,7 @@ ui8 *qr_encode_opts(
       fprintf(stderr, "%02X ", data[n]);
    fprintf(stderr, "\n");
 #endif
-   int w = o.ver * 4 + 17;
+   int w = versize(o.ver);
    int q = (o.noquiet ? 0 : 4); // Quiet
    ui8 *grid = malloc((w + q + q) * (w + q + q));
    if (!grid)
