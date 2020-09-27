@@ -936,7 +936,7 @@ ui8 *qr_encode_opts(
       *o.maskp = '0' + (o.mask & 7);
    if (o.eclp)
       *o.eclp = ecls[ecl];
-   if (o.padp)
-      *o.padp = padpos;
+   if (o.padlenp)
+      *o.padlenp = padpos;
    return grid;
 }

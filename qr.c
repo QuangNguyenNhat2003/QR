@@ -227,7 +227,7 @@ int main(int argc, const char *argv[])
       }
       short *padmap = NULL;
       int padlen = 0;
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, rotate: rotate, padp: &padlen, modep:&newmode);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, rotate: rotate, padlenp: &padlen, modep:&newmode);
       H = W;
       if (padlen > 2)
       {                         // Padding available
@@ -236,8 +236,8 @@ int main(int argc, const char *argv[])
          if (pad)
             strncpy(newpad, pad, padlen);
          else
-            for (int i = 1; i < padlen-1; i++)
-               newpad[i] = (i & 1) ? 0x11 : 0xEC; // Standard padding (1st and last are partial bytes)
+            for (int i = 1; i < padlen - 1; i++)
+               newpad[i] = (i & 1) ? 0x11 : 0xEC;       // Standard padding (1st and last are partial bytes)
          free(grid);
        grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci, fnc1, sam, san, noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, rotate:rotate);
          // Find size of overlay
