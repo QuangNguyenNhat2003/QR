@@ -491,22 +491,27 @@ ui8 *qr_encode_opts(
       addbits(4, 0);            // terminator
    unsigned int databits = dataptr * 8 + b;
    if (b)
-   {
-      if (o.padlen)
-         addbits(8 - b, *o.pad++);      // pad to byte
+   {                            // Partial
+      if (o.pad && o.padlen)
+         addbits(8 - b, *o.pad);        // pad to byte
       else
          addbits(8 - b, 0);     // pad to byte
-   } else if (o.padlen)
+   }
+   if (o.padlen)
    {                            // For consistency first pad byte is always covering any partial, and first whole pad byte is at +1
       o.padlen--;
-      o.pad++;
+      if (o.pad)
+         o.pad++;
    }
    // Padding bytes
    while (dataptr < total)
    {
       if (o.padlen)
       {                         // Add custom padding data
-         addbits(8, *o.pad++);
+         if (o.pad)
+            addbits(8, *o.pad++);
+         else
+            addbits(8, 0);
          o.padlen--;
          continue;
       }
@@ -816,14 +821,17 @@ ui8 *qr_encode_opts(
                   (*o.padmap)[gridxy(x, y)] = padmap[n] * 8 + b;
 #endif
                v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
-               b--;
-               if (b < 0)
-               {
-                  b = 7;
-                  n++;
-               }
+            } else if (o.padlen && o.pad)
+            {                   // Final bits
+               v |= (((*o.pad & (1 << b)) ? 1 : 0) | QR_TAG_DATA);
             }
             set(x, y, v);
+            b--;
+            if (b < 0)
+            {
+               b = 7;
+               n++;
+            }
          }
          if ((x > 6 ? x - 1 : x) & 1)
             x--;
