@@ -30,11 +30,12 @@ typedef struct {
    unsigned char noquiet:1;     // No quiet space included
    unsigned char rotate:2;      // Rotate image
    unsigned int padlen;         // Length of raw padding data to use
-   const unsigned char *pad;    // Raw padding data to use (first byte is partial, first whole byte is at +1)
+   const unsigned char *pad;    // Raw padding data to use. First byte is always for partial byte, and final byte for stray bits in code
    unsigned char *verp;         // Return version used
    char *eclp;                  // Return ecl used
    unsigned char *maskp;        // Return mask used
    char **modep;                // Return mode string
+   unsigned int *padp;          // Return number of pad bytes
    short **padmap;              // Return malloc'd map of bits for padding
 } qr_encode_t;
 #define	qr_encode(...)	qr_encode_opts((qr_encode_t){__VA_ARGS__})

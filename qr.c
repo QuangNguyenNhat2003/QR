@@ -226,73 +226,73 @@ int main(int argc, const char *argv[])
          overlay[s.st_size] = 0;
       }
       short *padmap = NULL;
-      unsigned char pad[3000];
-      for (int i = 1; i < sizeof(pad); i += 2)
-      {                         // Standard padding
-         pad[i] = 0xEC;
-         if (i + 1 < sizeof(pad))
-            pad[i + 1] = 0x11;
-      }
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, rotate:rotate);
+      int padlen = 0;
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, rotate: rotate, padp: &padlen, modep:&newmode);
       H = W;
-      if (!mask)
-      {                         // Work out a mask based on the random pad
+      if (padlen > 2)
+      {                         // Padding available
+         unsigned char newpad[padlen];
+         memset(newpad, 0, padlen);
+         if (pad)
+            strncpy(newpad, pad, padlen);
+         else
+            for (int i = 1; i < padlen-1; i++)
+               newpad[i] = (i & 1) ? 0x11 : 0xEC; // Standard padding (1st and last are partial bytes)
          free(grid);
-       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padlen: sizeof(pad), pad: pad, rotate:rotate);
-      }
-      // Find size of overlap
-      int ow = 0,
-          oh = 0;
-      char *o = overlay;
-      if (*o)
+       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci, fnc1, sam, san, noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, rotate:rotate);
+         // Find size of overlay
+         int ow = 0,
+             oh = 0;
+         char *o = overlay;
+         if (*o)
+            while (1)
+            {
+               char *l = o;
+               while (*o && *o != '\n' && *o != '/')
+                  o++;
+               if (o - l > ow)
+                  ow = o - l;
+               oh++;
+               if ((*o == '\n' && !o[1]) || !*o++)
+                  break;
+            }
+         int q = (noquiet ? 0 : 4);
+         int sx = (W - ow) / 2,
+             sy = (H - oh) / 2;
+         if (sy < q)
+            sy = q;
+         if (sx < q)
+            sx = q;
+         int y = sy;
+         o = overlay;
          while (1)
          {
-            char *l = o;
+            int b;
+            int x = sx;
             while (*o && *o != '\n' && *o != '/')
+            {
+               if (*o != ' ' && x >= 0 && x < W && y >= 0 && y < H && (b = padmap[y * W + x]) >= 0)
+               {
+                  if (*o == '.')
+                  {             // Space
+                     if ((grid[y * W + x] & QR_TAG_BLACK))
+                        newpad[b / 8] ^= (1 << (b & 7));
+                  } else
+                  {             // Black
+                     if (!(grid[y * W + x] & QR_TAG_BLACK))
+                        newpad[b / 8] ^= (1 << (b & 7));
+                  }
+               }
+               x++;
                o++;
-            if (o - l > ow)
-               ow = o - l;
-            oh++;
+            }
             if ((*o == '\n' && !o[1]) || !*o++)
                break;
+            y++;
          }
-      int q = (noquiet ? 0 : 4);
-      int sx = (W - ow) / 2,
-          sy = (H - oh) / 2;
-      if (sy < q)
-         sy = q;
-      if (sx < q)
-         sx = q;
-      // Remap the mask
-      int y = sy;
-      o = overlay;
-      while (1)
-      {
-         int b;
-         int x = sx;
-         while (*o && *o != '\n' && *o != '/')
-         {
-            if (*o != ' ' && x >= 0 && x < W && y >= 0 && y < H && (b = padmap[y * W + x]) >= 0)
-            {
-               if (*o == '.')
-               {                // Space
-                  if ((grid[y * W + x] & QR_TAG_BLACK))
-                     pad[b / 8] ^= (1 << (b & 7));
-               } else
-               {                // Black
-                  if (!(grid[y * W + x] & QR_TAG_BLACK))
-                     pad[b / 8] ^= (1 << (b & 7));
-               }
-            }
-            x++;
-            o++;
-         }
-         if ((*o == '\n' && !o[1]) || !*o++)
-            break;
-         y++;
+         free(grid);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: padlen, pad: newpad, padmap: &padmap, rotate:rotate);
       }
-      free(grid);
-    grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: sizeof(pad), pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, padlen: sizeof(pad), pad: pad, modep: &newmode, rotate:rotate);
    } else
    {                            // Simple
     grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, rotate:rotate);

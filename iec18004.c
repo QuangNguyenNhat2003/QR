@@ -280,12 +280,12 @@ ui8 *qr_encode_opts(
    char *mode = malloc(o.len);
    if (!mode)
       return NULL;
-   if (o.mode)                  // Use provided mode (pad)
+   if (o.mode && *o.mode)       // Use provided mode (pad)
       for (n = 0; n < o.len; n++)
       {
          mode[n] = *o.mode;
          if (o.mode[1])
-            o.mode++;
+            o.mode++;           // Repeats last mode to end
       }
    if (!o.eci)
    {                            // No ECI set, lets see if we need to set UTF-8, note 5C is Yen in default ECI and 7E is special too
@@ -353,7 +353,7 @@ ui8 *qr_encode_opts(
          }
       }
       if (o.padlen)
-         count = (count + 4 + 7) / 8 * 8 + (o.padlen - 1) * 8;  // Manual padding added, and 0000
+         count = (count + 4 + 7) / 8 * 8 + (o.padlen - 2) * 8;  // Manual padding added, and 0000, even if o.pad is NULL. -2 as first/last are partial
 #ifdef DEBUG
       fprintf(stderr, "Ver=%d Bits=%d (%d)\n", o.ver, count, (count + 7) / 8);
 #endif
@@ -490,36 +490,30 @@ ui8 *qr_encode_opts(
    if (dataptr < total)
       addbits(4, 0);            // terminator
    unsigned int databits = dataptr * 8 + b;
+   unsigned int padpos = 0;     // Track pad bytes used
    if (b)
    {                            // Partial
-      if (o.pad && o.padlen)
-         addbits(8 - b, *o.pad);        // pad to byte
+      if (o.pad && padpos < o.padlen)
+         addbits(8 - b, o.pad[padpos]); // pad to byte
       else
-         addbits(8 - b, 0);     // pad to byte
+         addbits(8 - b, 0);     // pad to byte with zero
    }
-   if (o.padlen)
-   {                            // For consistency first pad byte is always covering any partial, and first whole pad byte is at +1
-      o.padlen--;
-      if (o.pad)
-         o.pad++;
-   }
+   padpos++;                    // First byte is always used for any partial padding, the actual first whole byte is offset 1
    // Padding bytes
    while (dataptr < total)
    {
-      if (o.padlen)
-      {                         // Add custom padding data
-         if (o.pad)
-            addbits(8, *o.pad++);
-         else
-            addbits(8, 0);
-         o.padlen--;
+      if (o.pad && padpos < o.padlen)
+      {
+         addbits(8, o.pad[padpos++]);   // Use padding byte
          continue;
       }
       // Standard padding
       addbits(8, 0xEC);
+      padpos++;
       if (dataptr == total)
          break;
       addbits(8, 0x11);
+      padpos++;
    }
 #ifdef DEBUG
    for (n = 0; n < dataptr; n++)
@@ -630,11 +624,6 @@ ui8 *qr_encode_opts(
    ui8 *grid = malloc((w + q + q) * (w + q + q));
    if (!grid)
       return NULL;
-   if (!grid)
-   {
-      free(mode);
-      return NULL;
-   }
    memset(grid, 0, (w + q + q) * (w + q + q));
    inline int gridxy(int x, int y) {
       x += q;
@@ -820,17 +809,23 @@ ui8 *qr_encode_opts(
                if (o.padmap && (v & QR_TAG_PAD) && n < total && padmap[n] >= 0)
                   (*o.padmap)[gridxy(x, y)] = padmap[n] * 8 + b;
 #endif
-               v |= ((data[n] & (1 << b) ? 1 : 0) | QR_TAG_DATA);
-            } else if (o.padlen && o.pad)
+               v |= (data[n] & (1 << b) ? 1 : 0);
+            } else
             {                   // Final bits
-               v |= (((*o.pad & (1 << b)) ? 1 : 0) | QR_TAG_DATA);
+               if (o.pad && padpos < o.padlen)
+                  v |= ((o.pad[padpos] & (1 << b)) ? 1 : 0);
+               if (o.padmap)
+                  (*o.padmap)[gridxy(x, y)] = padpos * 8 + b;
             }
-            set(x, y, v);
+            set(x, y, v | QR_TAG_DATA);
             b--;
             if (b < 0)
             {
                b = 7;
-               n++;
+               if (n >= dataptr)
+                  padpos++;
+               else
+                  n++;
             }
          }
          if ((x > 6 ? x - 1 : x) & 1)
@@ -863,6 +858,8 @@ ui8 *qr_encode_opts(
             }
          }
       }
+      if (b < 7)
+         padpos++;              // Last byte was used as partial
    }
    {                            // Masking
       int x,
@@ -939,5 +936,7 @@ ui8 *qr_encode_opts(
       *o.maskp = '0' + (o.mask & 7);
    if (o.eclp)
       *o.eclp = ecls[ecl];
+   if (o.padp)
+      *o.padp = padpos;
    return grid;
 }
