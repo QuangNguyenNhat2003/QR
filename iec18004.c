@@ -398,7 +398,7 @@ ui8 *qr_encode_opts(
    }
    while (versize(o.ver) + (o.noquiet ? 0 : 8) < o.minsize && o.ver < 40)
       o.ver++;
-   if (!o.ecl)
+   if (!o.ecl && !o.padlenp && !o.padlen && !o.pad)
    {                            // Can we do better ECL in same size?
       int count = bits();
       while (ecl < 3 && (count + 7) / 8 <= bytes(o.ver) - eccbytes[o.ver - 1][ecl + 1])
