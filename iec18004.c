@@ -892,6 +892,8 @@ ui8 *qr_encode_opts(
                for (y = 0; y < w; y++)
                {
                   int bit(int x, int y) {       // What colour would a bit be, masked if data
+                     if (x < 0 || x >= w || y < 0 || y >= w)
+                        return 0;
                      int v = grid[gridxy(x, y)];
                      if (v & QR_TAG_DATA)
                         v ^= getmask(x, y, m);
