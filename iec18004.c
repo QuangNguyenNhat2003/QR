@@ -396,7 +396,7 @@ ui8 *qr_encode_opts(
       free(mode);
       return NULL;
    }
-   while (versize(o.ver) < o.minsize && o.ver < 40)
+   while (versize(o.ver) + (o.noquiet ? 0 : 8) < o.minsize && o.ver < 40)
       o.ver++;
    if (!o.ecl)
    {                            // Can we do better ECL in same size?

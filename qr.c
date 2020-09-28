@@ -172,8 +172,6 @@ int main(int argc, const char *argv[])
       S = 1;
    if (scale < 0)
       scale = 0;
-   if (minsize && !noquiet)
-      minsize -= 8;             // Specify size with quiet zone
 
    if (outfile && !strcmp(outfile, "data:"))
    {                            // Legacy format for data:
