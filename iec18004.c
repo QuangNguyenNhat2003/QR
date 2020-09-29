@@ -644,7 +644,7 @@ ui8 *qr_encode_opts(
    if (!grid)
       return NULL;
    memset(grid, 0, (w + q + q) * (w + q + q));
-   inline int gridxy(int x, int y) {
+   inline int gridxy(int x, int y) { // Position in grid for x/y where 0/0 is top left of actual code inside the quiet zone
       x += q;
       y += q;
       switch (o.rotate)
@@ -886,52 +886,96 @@ ui8 *qr_encode_opts(
       if (!o.mask)
       {                         // Auto mask
          int best = -1,
+             bestscore = 0,
              m,
              x,
              y;
-         int maskbad[8] = { };
          for (m = 0; m < 8; m++)
          {
             setfcode(m);
+            int bit(int x, int y) {     // What colour would a bit be, masked if data
+               if (x < 0 || x >= w || y < 0 || y >= w)
+                  return 0;
+               int v = grid[gridxy(x, y)];
+               if (v & QR_TAG_DATA)
+                  v ^= getmask(x, y, m);
+               return v & 1;
+            }
+            // 7.8.3.1
+            int n1 = 3,         // runs 5 or more
+                n2 = 3,         // blocks 2x2
+                n3 = 40,        // 1:1:3:1:1 patterns
+                n4 = 10,        // bad ratio
+                score = 0,
+                c = 0,
+                v,
+                p1 = 0,
+                p2 = 0,
+                p3 = 0,
+                p4 = 0,
+                p5 = 0,
+                p6 = 0;
+            void endrun(void) {
+               if (c >= 5)
+                  score += n1 + (c - 5);
+               if (!v)
+               {                // Look at x:1:1:3:1:1:x
+		       // 7.8.3.1 table 11 does not match, one part says 4 modules another says *more* than 4 modules
+                  if ((c >= 4 || p6 >= 4) && p1 == 1 && p2 == 1 && p3 == 3 && p4 == 1 && p5 == 1)
+                     score += n3;
+               }
+               p6 = p5;
+               p5 = p4;
+               p4 = p3;
+               p3 = p2;
+               p2 = p1;
+               p1 = c;
+               c = 0;
+            }
+            for (y = 0; y < w; y++)
+            {                   // runs horizontally
+               c = 0;
+               for (x = -4; x < w + 5; x++)
+               {
+                  v = bit(x-1, y);
+                  if (x == w + 4 || v != bit(x, y))
+                     endrun();
+                  c++;          // Count
+               }
+            }
+            for (x = 0; x < w; x++)
+            {                   // Runs vertically
+               c = 0;
+               for (y = -4; y < w + 5; y++)
+               {
+                  v = bit(x, y-1);
+                  if (y == w + 4 || v != bit(x, y ))
+                     endrun();
+                  c++;          // Count
+               }
+            }
+            c = 0;
             for (x = 0; x < w; x++)
                for (y = 0; y < w; y++)
                {
-                  int bit(int x, int y) {       // What colour would a bit be, masked if data
-                     if (x < 0 || x >= w || y < 0 || y >= w)
-                        return 0;
-                     int v = grid[gridxy(x, y)];
-                     if (v & QR_TAG_DATA)
-                        v ^= getmask(x, y, m);
-                     return v & 1;
-                  }
-                  int v = bit(x, y),
-                      q = 0;
-                  if (v == bit(x + 1, y))
-                  {
-                     maskbad[m]++;      // pair
-                     q++;
-                     if (v == bit(x + 2, y))
-                        maskbad[m] += 10;       //line
-                  }
-                  if (v == bit(x, y + 1))
-                  {
-                     maskbad[m]++;      // pair
-                     q++;
-                     if (v == bit(x, y + 2))
-                        maskbad[m] += 10;       //line
-                  }
-                  if (q == 2 && v == bit(x + 1, y + 1))
-                     maskbad[m] += 20;  // box
+                  if ((v = bit(x, y)))
+                     c++;       // Count black
+                  if (v == bit(x + 1, y) && v == bit(x, y + 1) && v == bit(x + 1, y + 1))
+                     score += n2;       // 2x2 blocks
                }
-         }
-         for (m = 0; m < 8; m++)
-         {                      // Find best black/white balance
-            if (maskbad[m] < best || best < 0)
+            c = (c * 100 / w / w);      // Percent
+            c /= 5;             // Per 5%
+            if (c < 10)
+               score += n4 * (10 - c);
+            if (c > 10)
+               score += n4 * (c - 10);
+            if (best < 0 || score < bestscore)
             {
-               best = maskbad[m];
-               o.mask = m;
+               best = m;
+               bestscore = score;
             }
          }
+         o.mask = best + '0';
       }
       for (x = 0; x < w; x++)
          for (y = 0; y < w; y++)
