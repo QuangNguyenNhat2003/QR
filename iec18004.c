@@ -440,6 +440,7 @@ ui8 *qr_encode_opts(
       addbits(4, 3);            //Structured append
       addbits(4, o.sam - 1);
       addbits(4, o.san - 1);
+      addbits(8, o.parity);
    }
    if (o.eci)
    {
@@ -644,7 +645,7 @@ ui8 *qr_encode_opts(
    if (!grid)
       return NULL;
    memset(grid, 0, (w + q + q) * (w + q + q));
-   inline int gridxy(int x, int y) { // Position in grid for x/y where 0/0 is top left of actual code inside the quiet zone
+   inline int gridxy(int x, int y) {    // Position in grid for x/y where 0/0 is top left of actual code inside the quiet zone
       x += q;
       y += q;
       switch (o.rotate)
@@ -920,7 +921,7 @@ ui8 *qr_encode_opts(
                   score += n1 + (c - 5);
                if (!v)
                {                // Look at x:1:1:3:1:1:x
-		       // 7.8.3.1 table 11 does not match, one part says 4 modules another says *more* than 4 modules
+                  // 7.8.3.1 table 11 does not match, one part says 4 modules another says *more* than 4 modules
                   if ((c >= 4 || p6 >= 4) && p1 == 1 && p2 == 1 && p3 == 3 && p4 == 1 && p5 == 1)
                      score += n3;
                }
@@ -937,7 +938,7 @@ ui8 *qr_encode_opts(
                c = 0;
                for (x = -4; x < w + 5; x++)
                {
-                  v = bit(x-1, y);
+                  v = bit(x - 1, y);
                   if (x == w + 4 || v != bit(x, y))
                      endrun();
                   c++;          // Count
@@ -948,8 +949,8 @@ ui8 *qr_encode_opts(
                c = 0;
                for (y = -4; y < w + 5; y++)
                {
-                  v = bit(x, y-1);
-                  if (y == w + 4 || v != bit(x, y ))
+                  v = bit(x, y - 1);
+                  if (y == w + 4 || v != bit(x, y))
                      endrun();
                   c++;          // Count
                }

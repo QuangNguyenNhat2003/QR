@@ -27,6 +27,7 @@ typedef struct {
    unsigned char fnc1;          // Function code 0-2
    unsigned char sam;           // Structured append 1-16 index
    unsigned char san;           // Structured append 1-16 total
+   unsigned char parity;        // Structured append Parity (XOR of all data in total barcode, so same for all parts)
    unsigned char ai;            // Application Indicator (FNC1=2)
    unsigned char noquiet:1;     // No quiet space included
    unsigned char rotate:2;      // Rotate image
