@@ -337,6 +337,8 @@ ui8 *qr_encode_opts(
          count += 12;
       if (o.fnc1)
          count += 4;            // FNC1
+      if (o.fnc1 == 2)
+         count += 8;            // AI
       while (n < o.len)
       {
          char m = mode[n];
@@ -452,7 +454,10 @@ ui8 *qr_encode_opts(
    if (o.fnc1 == 1)
       addbits(4, 5);            // FNC1 (1st)
    if (o.fnc1 == 2)
+   {
       addbits(4, 9);            // FNC1 (2nd)
+      addbits(8, o.ai);
+   }
    n = 0;
    while (n < o.len)
    {

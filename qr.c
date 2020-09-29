@@ -83,6 +83,7 @@ int main(int argc, const char *argv[])
    char *pad = NULL;
    char *mask = NULL;
    char *overlay = NULL;
+   int ai = 0;
    int ver = 0;
    int eci = 0;
    int fnc1 = 0;
@@ -107,6 +108,7 @@ int main(int argc, const char *argv[])
       { "mask", 'x', POPT_ARG_STRING, &mask, 0, "Mask", "0-7" },
       { "eci", 'E', POPT_ARG_INT, &eci, 0, "ECI (default UTF-8 if needed)", "N" },
       { "fnc1", 'F', POPT_ARG_INT, &fnc1, 0, "FNC1", "1/2" },
+      { "ai", 0, POPT_ARG_INT, &ai, 0, "Application Indication (for FNC1=2)", "0-255" },
       { "number", 'M', POPT_ARG_INT, &sam, 0, "Structured append", "M" },
       { "total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N" },
       { "outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or -" },
@@ -229,7 +231,7 @@ int main(int argc, const char *argv[])
       }
       short *padmap = NULL;
       int padlen = 0;
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep:&newmode);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, ai: ai, sam: sam, san: san, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep:&newmode);
       H = W;
       if (padlen > 2)
       {                         // Padding available
@@ -241,7 +243,7 @@ int main(int argc, const char *argv[])
             for (int i = 1; i < padlen - 1; i++)
                newpad[i] = (i & 1) ? 0x11 : 0xEC;       // Standard padding (1st and last are partial bytes)
          free(grid);
-       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci, fnc1, sam, san, noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, minsize: minsize, rotate:rotate);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci, fnc1, ai: ai, sam: sam, san: san, noquiet: noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, minsize: minsize, rotate:rotate);
          // Find size of overlay
          int ow = 0,
              oh = 0;
