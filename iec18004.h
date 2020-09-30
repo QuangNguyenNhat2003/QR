@@ -40,6 +40,7 @@ typedef struct {
    char **modep;                // Return mode string
    unsigned int *padlenp;       // Return number of pad bytes
    short **padmap;              // Return malloc'd map of bits for padding
+   unsigned int *scorep;        // Return score (for mask selection, as per 7.8.3.1)
 } qr_encode_t;
 #define	qr_encode(...)	qr_encode_opts((qr_encode_t){__VA_ARGS__})
 unsigned char *qr_encode_opts(qr_encode_t);

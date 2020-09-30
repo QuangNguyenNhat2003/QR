@@ -881,103 +881,84 @@ ui8 *qr_encode_opts(
       if (b < 7)
          padpos++;              // Last byte was used as partial
    }
+   unsigned int score(char m) { // Score based on mask
+      unsigned int score = 0;
+      setfcode(m);
+      int bit(int x, int y) {   // What colour would a bit be based on selected mask being applied
+         if (x < 0 || x >= w || y < 0 || y >= w)
+            return 0;
+         int v = grid[gridxy(x, y)];
+         if (v & QR_TAG_DATA)
+            v ^= getmask(x, y, m);
+         return v & 1;
+      }
+      // 7.8.3.1
+      unsigned int n1 = 3,      // runs 5 or more
+          n2 = 3,               // blocks 2x2
+          n3 = 40,              // 1:1:3:1:1 patterns
+          n4 = 10,              // bad ratio
+          c = 0,
+          v;
+      int x,
+       y;
+      void checkbit(int b) {    // Check pattern each way
+         v = (v << 1) | (b ? 1 : 0);
+         if ((v ^ (v >> 1)) & 1)
+         {                      // End of a run
+            if (c >= 5)
+               score += n1 + (c - 5);
+            c = 0;
+         }
+         c++;
+         // Pattern
+         if ((v & 0xFFF) == 0x0BA || (v & 0xFFF) == 0x5D0)
+            score += n3;        // ....X.XXX.X. or .X.XXX.X....
+      }
+      for (y = 0; y < w; y++)
+         for (x = -4; x < w + 5; x++)
+            checkbit(x == w + 4 || bit(x, y));
+      for (x = 0; x < w; x++)
+         for (y = -4; y < w + 5; y++)
+            checkbit(y == w + 4 || bit(x, y));
+      c = 0;
+      for (x = 0; x < w; x++)
+         for (y = 0; y < w; y++)
+         {
+            if ((v = bit(x, y)))
+               c++;             // Count black
+            if (v == bit(x + 1, y) && v == bit(x, y + 1) && v == bit(x + 1, y + 1))
+               score += n2;     // 2x2 blocks
+         }
+      c = (c * 100 / w / w);    // Percent
+      c /= 5;                   // Per 5%
+      if (c < 10)
+         score += n4 * (10 - c);
+      else if (c > 10)
+         score += n4 * (c - 10);
+      return score;
+   }
    {                            // Masking
       int x,
        y;
       if (!o.mask)
-      {                         // Auto mask
-         int best = -1,
-             bestscore = 0,
-             m,
-             x,
-             y;
-         for (m = 0; m < 8; m++)
+      {                         // Auto mask - find best mask using scoring
+         unsigned int bestscore = 0;
+         char best = -1;
+         for (char m = 0; m < 8; m++)
          {
-            setfcode(m);
-            int bit(int x, int y) {     // What colour would a bit be, masked if data
-               if (x < 0 || x >= w || y < 0 || y >= w)
-                  return 0;
-               int v = grid[gridxy(x, y)];
-               if (v & QR_TAG_DATA)
-                  v ^= getmask(x, y, m);
-               return v & 1;
-            }
-            // 7.8.3.1
-            int n1 = 3,         // runs 5 or more
-                n2 = 3,         // blocks 2x2
-                n3 = 40,        // 1:1:3:1:1 patterns
-                n4 = 10,        // bad ratio
-                score = 0,
-                c = 0,
-                v,
-                p1 = 0,
-                p2 = 0,
-                p3 = 0,
-                p4 = 0,
-                p5 = 0,
-                p6 = 0;
-            void endrun(void) {
-               if (c >= 5)
-                  score += n1 + (c - 5);
-               if (!v)
-               {                // Look at x:1:1:3:1:1:x
-                  // 7.8.3.1 table 11 does not match, one part says 4 modules another says *more* than 4 modules
-                  if ((c >= 4 || p6 >= 4) && p1 == 1 && p2 == 1 && p3 == 3 && p4 == 1 && p5 == 1)
-                     score += n3;
-               }
-               p6 = p5;
-               p5 = p4;
-               p4 = p3;
-               p3 = p2;
-               p2 = p1;
-               p1 = c;
-               c = 0;
-            }
-            for (y = 0; y < w; y++)
-            {                   // runs horizontally
-               c = 0;
-               for (x = -4; x < w + 5; x++)
-               {
-                  v = bit(x - 1, y);
-                  if (x == w + 4 || v != bit(x, y))
-                     endrun();
-                  c++;          // Count
-               }
-            }
-            for (x = 0; x < w; x++)
-            {                   // Runs vertically
-               c = 0;
-               for (y = -4; y < w + 5; y++)
-               {
-                  v = bit(x, y - 1);
-                  if (y == w + 4 || v != bit(x, y))
-                     endrun();
-                  c++;          // Count
-               }
-            }
-            c = 0;
-            for (x = 0; x < w; x++)
-               for (y = 0; y < w; y++)
-               {
-                  if ((v = bit(x, y)))
-                     c++;       // Count black
-                  if (v == bit(x + 1, y) && v == bit(x, y + 1) && v == bit(x + 1, y + 1))
-                     score += n2;       // 2x2 blocks
-               }
-            c = (c * 100 / w / w);      // Percent
-            c /= 5;             // Per 5%
-            if (c < 10)
-               score += n4 * (10 - c);
-            if (c > 10)
-               score += n4 * (c - 10);
-            if (best < 0 || score < bestscore)
+            unsigned int s = score(m);
+            if (best < 0 || s < bestscore)
             {
                best = m;
-               bestscore = score;
+               bestscore = s;
             }
          }
          o.mask = best + '0';
-      }
+         if (o.scorep)
+            *o.scorep = bestscore;
+      } else if (o.scorep)
+         *o.scorep = score(o.mask);
+      // Apply mask
       for (x = 0; x < w; x++)
          for (y = 0; y < w; y++)
             if (grid[gridxy(x, y)] & QR_TAG_DATA)       // data bit
