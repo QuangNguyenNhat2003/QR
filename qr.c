@@ -89,6 +89,7 @@ int main(int argc, const char *argv[])
    int fnc1 = 0;
    int sam = 0;
    int san = 0;
+   int parity = 0;
    int formatcode = 0;
    int noquiet = 0;
    int rotate = 0;
@@ -111,6 +112,7 @@ int main(int argc, const char *argv[])
       { "ai", 0, POPT_ARG_INT, &ai, 0, "Application Indication (for FNC1=2)", "0-255" },
       { "number", 'M', POPT_ARG_INT, &sam, 0, "Structured append", "M" },
       { "total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N" },
+      { "parity", 0, POPT_ARG_INT, &parity, 0, "Structured append parity", "0-255" },
       { "outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or -" },
       { "svg", 0, POPT_ARG_VAL, &formatcode, 'v', "SVG" },
       { "path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path" },
@@ -231,7 +233,7 @@ int main(int argc, const char *argv[])
       }
       short *padmap = NULL;
       int padlen = 0;
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, ai: ai, sam: sam, san: san, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep:&newmode);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep:&newmode);
       H = W;
       if (padlen > 2)
       {                         // Padding available
@@ -243,7 +245,7 @@ int main(int argc, const char *argv[])
             for (int i = 1; i < padlen - 1; i++)
                newpad[i] = (i & 1) ? 0x11 : 0xEC;       // Standard padding (1st and last are partial bytes)
          free(grid);
-       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci, fnc1, ai: ai, sam: sam, san: san, noquiet: noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, minsize: minsize, rotate:rotate);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, minsize: minsize, rotate:rotate);
          // Find size of overlay
          int ow = 0,
              oh = 0;
@@ -295,11 +297,11 @@ int main(int argc, const char *argv[])
             y++;
          }
          free(grid);
-       grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate:rotate);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate:rotate);
       }
    } else
    {                            // Simple
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci, fnc1, sam, san, noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate:rotate);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate:rotate);
       H = W;
    }
 
