@@ -275,19 +275,20 @@ int main(int argc, const char *argv[])
          if (ox < q)
             ox = q;
          if (rotate == 1)
-         {                      // Find first line with pad as top, as rotate has data at top
+         {                      // Find position, rotate=1 puts the ecc at the bottom
             int x,
              y;
             for (y = 0; y < W; y++)
             {
                for (x = 0; x < W; x++)
-                  if (grid[y * W + x] & QR_TAG_PAD)
+                  if (grid[y * W + x] & QR_TAG_ECC)
                      break;
                if (x < W)
                   break;
             }
-            if (y + ow < W)
-               oy = y;
+            if (x > 1 && grid[y * W + x - 1] & QR_TAG_DATA)
+               y += 2;
+            oy = y - oh;
          }
          int y = oy;
          o = overlay;
