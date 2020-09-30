@@ -650,14 +650,14 @@ ui8 *qr_encode_opts(
       y += q;
       switch (o.rotate)
       {
-      case 0:
-         return (w + q + q) * y + x;
       case 1:
          return (w + q + q) * (w + q + q - 1 - x) + y;
       case 2:
          return (w + q + q) * (w + q + q - 1 - y) + (w + q + q - 1 - x);
       case 3:
          return (w + q + q) * x + (w + q + q - 1 - y);
+      default:
+         return (w + q + q) * y + x;
       }
    }
    inline void set(int x, int y, int v) {

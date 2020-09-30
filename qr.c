@@ -92,7 +92,7 @@ int main(int argc, const char *argv[])
    int parity = 0;
    int formatcode = 0;
    int noquiet = 0;
-   int rotate = 0;
+   int rotate = -1;
    int minsize = 0;
    double scale = -1,
        dpi = -1;
@@ -215,6 +215,8 @@ int main(int argc, const char *argv[])
    unsigned int score = 0;
    if (overlay)
    {                            // Overlay in padding
+      if (rotate < 0)
+         rotate = 1;
       if (*overlay == '$' && !(overlay = getenv(overlay + 1)))
          errx(1, "No overlay");
       else if (*overlay == '@')
@@ -234,7 +236,9 @@ int main(int argc, const char *argv[])
       }
       short *padmap = NULL;
       int padlen = 0;
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep: &newmode, scorep:&score);
+      if (!ver && !minsize)
+         padlen = barcodelen;   // Force some padding
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep: &newmode, scorep: &score, padlen:padlen);
       H = W;
       if (padlen > 2)
       {                         // Padding available
@@ -264,18 +268,33 @@ int main(int argc, const char *argv[])
                   break;
             }
          int q = (noquiet ? 0 : 4);
-         int sx = (W - ow) / 2,
-             sy = (H - oh) / 2;
-         if (sy < q)
-            sy = q;
-         if (sx < q)
-            sx = q;
-         int y = sy;
+         int ox = (W - ow) / 2,
+             oy = (H - oh) / 2;
+         if (oy < q)
+            oy = q;
+         if (ox < q)
+            ox = q;
+         if (rotate == 1 || rotate == 3)
+         {                      // Find first line with pad as top
+            int x,
+             y;
+            for (y = 0; y < W; y++)
+            {
+               for (x = 0; x < W; x++)
+                  if (grid[y * W + x] & QR_TAG_PAD)
+                     break;
+               if (x < W)
+                  break;
+            }
+            if (y + ow < W)
+               oy = y;
+         }
+         int y = oy;
          o = overlay;
          while (1)
          {
             int b;
-            int x = sx;
+            int x = ox;
             while (*o && *o != '\n' && *o != '/')
             {
                if (*o != ' ' && x >= 0 && x < W && y >= 0 && y < H && (b = padmap[y * W + x]) >= 0)
