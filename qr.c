@@ -274,8 +274,8 @@ int main(int argc, const char *argv[])
             oy = q;
          if (ox < q)
             ox = q;
-         if (rotate == 1 || rotate == 3)
-         {                      // Find first line with pad as top
+         if (rotate == 1)
+         {                      // Find first line with pad as top, as rotate has data at top
             int x,
              y;
             for (y = 0; y < W; y++)
