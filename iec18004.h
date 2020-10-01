@@ -16,12 +16,12 @@ enum {                          // Error Correction Level
 #define	QR_TAG_SET	128     // Value is defined (otherwise is quiet)
 
 typedef struct {
-   int len;                     // Data length
+   unsigned int len;            // Data length
    const char *data;            // Data (can include nulls if required)
    unsigned char ver;           // Size of QR code (units) 1-40, or 0 for auto
    char ecl;                    // Error correction level L/M/Q/H, 0 is L (or better if same size code)
    char mask;                   // Masking code '0'-'7'
-   const char *mode;            // Character mode string
+   const char *mode;            // Character mode string (characters N, A, 8, K, though K is not supported yet)
    unsigned int *widthp;        // Return width
    unsigned int eci;            // Coding indicator (0=auto)
    unsigned char fnc1;          // Function code 0-2
@@ -46,4 +46,5 @@ typedef struct {
 unsigned char *qr_encode_opts(qr_encode_t);
 
 // Used internally, but this allows you to see what the automatic mode calculation comes up with
-void qr_mode(char *mode, int ver, int len, const char *input);  // Work out a mode for input
+void qr_mode(char *mode, unsigned char ver, unsigned int len, const char *input);       // Work out a mode for input
+void qr_padding(unsigned int len, unsigned char *pad);  // Fill in standard padding

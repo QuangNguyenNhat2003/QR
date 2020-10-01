@@ -243,14 +243,7 @@ int main(int argc, const char *argv[])
       if (padlen > 2)
       {                         // Padding available
          unsigned char newpad[padlen];
-         memset(newpad, 0, padlen);
-         if (pad)
-            strncpy(newpad, pad, padlen);
-         else
-            for (int i = 1; i < padlen - 1; i++)
-               newpad[i] = (i & 1) ? 0x11 : 0xEC;       // Standard padding (1st and last are partial bytes)
-         free(grid);
-       grid = qr_encode(barcodelen, barcode, newver, newecl, mask ? *mask : 0, newmode, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, maskp: &newmask, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
+         qr_padding(padlen, newpad);
          // Find size of overlay
          int ow = 0,
              oh = 0;

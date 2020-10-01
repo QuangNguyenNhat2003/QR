@@ -138,7 +138,7 @@ static int qr_bits(int ver, char mode, int len)
    return count;
 }
 
-void qr_mode(char *mode, int ver, int len, const char *input)
+void qr_mode(char *mode, unsigned char ver, unsigned int len, const char *input)
 {                               // Work out a mode to use
    if (!len)
       return;
@@ -252,6 +252,16 @@ static int getmask(int x, int y, int mask)
 }
 
 #define versize(v) ((v)*4+17)
+
+void qr_padding(unsigned int len, unsigned char *pad)
+{                               // Fill in standard padding
+   if (!len)
+      return;
+   pad[0] = 0;
+   pad[len - 1] = 0;
+   for (unsigned int p = 1; p < len - 1; p++)
+      pad[p] = (p & 1) ? 0xEC : 0x11;
+}
 
 ui8 *qr_encode_opts(
 #ifdef	FB
@@ -523,16 +533,9 @@ ui8 *qr_encode_opts(
    while (dataptr < total)
    {
       if (o.pad && padpos < o.padlen)
-      {
-         addbits(8, o.pad[padpos++]);   // Use padding byte
-         continue;
-      }
-      // Standard padding
-      addbits(8, 0xEC);
-      padpos++;
-      if (dataptr == total)
-         break;
-      addbits(8, 0x11);
+         addbits(8, o.pad[padpos]);     // Use padding byte
+      else
+         addbits(8, (padpos & 1) ? 0xEC : 0x11);
       padpos++;
    }
 #ifdef DEBUG
