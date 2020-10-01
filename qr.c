@@ -265,7 +265,7 @@ int main(int argc, const char *argv[])
          int q = (noquiet ? 0 : 4);
          int ox = (W - ow) / 2,
              oy = (H - oh) / 2;
-         if (overlayrepeat)
+         if (overlayrepeat && ow <= W - q - q - 7)
             ox = q + 7;         // Just after clock line
          if (rotate == 1)
          {                      // Find position, rotate=1 puts the ecc at the bottom
