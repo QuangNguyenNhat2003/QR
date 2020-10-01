@@ -279,9 +279,9 @@ int main(int argc, const char *argv[])
                if (x < W)
                   break;
             }
-            if (y < W && !(grid[y * W + ox + ow - 1] & QR_TAG_ECC))
+            if (y < W && (grid[y * W + ox + ow - 1] & QR_TAG_DATA) && !(grid[y * W + ox + ow - 1] & QR_TAG_ECC))
                y++;
-            if (y < W && !(grid[y * W + ox + ow - 1] & QR_TAG_ECC))
+            if (y < W && (grid[y * W + ox + ow - 1] & QR_TAG_DATA) && !(grid[y * W + ox + ow - 1] & QR_TAG_ECC))
                y++;
             oy = y - oh;
          }
