@@ -263,10 +263,6 @@ int main(int argc, const char *argv[])
          int q = (noquiet ? 0 : 4);
          int ox = (W - ow) / 2,
              oy = (H - oh) / 2;
-         if (oy < q)
-            oy = q;
-         if (ox < q)
-            ox = q;
          if (rotate == 1)
          {                      // Find position, rotate=1 puts the ecc at the bottom
             int x,
@@ -285,6 +281,10 @@ int main(int argc, const char *argv[])
                y++;
             oy = y - oh;
          }
+         if (oy < q)
+            oy = q;             // Allow for overlay from the top - e.g. covering whole code
+         if (ox < q)
+            ox = q;             // Allow overlay from the left - e.g. covering whole code
          int y = oy;
          o = overlay;
          while (1)
