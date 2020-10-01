@@ -94,6 +94,7 @@ int main(int argc, const char *argv[])
    int noquiet = 0;
    int rotate = -1;
    int minsize = 0;
+   int overlayrepeat = 0;
    double scale = -1,
        dpi = -1;
    int S = -1;
@@ -131,6 +132,7 @@ int main(int argc, const char *argv[])
       { "dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi" },
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
       { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", ".X./X.X pattern or $var or @file" },
+      { "repeat", 'Q', POPT_ARG_NONE, &overlayrepeat, 0, "Repeat overlay" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
       { "right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right" },
       { "left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left" },
@@ -285,25 +287,31 @@ int main(int argc, const char *argv[])
             oy = q;             // Allow for overlay from the top - e.g. covering whole code
          if (ox < q)
             ox = q;             // Allow overlay from the left - e.g. covering whole code
+         void set(int x, int y, int v) {
+            int b;
+            if (x < 0 || x >= W || y < 0 || y >= W || (b = padmap[y * W + x]) < 0)
+               return;
+            if ((grid[y * W + x] & QR_TAG_BLACK))
+               newpad[b / 8] ^= (1 << (b & 7));
+            if (!v)
+               return;
+            newpad[b / 8] ^= (1 << (b & 7));
+         }
          int y = oy;
          o = overlay;
          while (1)
          {
-            int b;
             int x = ox;
             while (*o && *o != '\n' && *o != '/')
             {
-               if (*o != ' ' && x >= 0 && x < W && y >= 0 && y < H && (b = padmap[y * W + x]) >= 0)
+               if (*o != ' ')
                {
-                  if (*o == '.')
-                  {             // Space
-                     if ((grid[y * W + x] & QR_TAG_BLACK))
-                        newpad[b / 8] ^= (1 << (b & 7));
-                  } else
-                  {             // Black
-                     if (!(grid[y * W + x] & QR_TAG_BLACK))
-                        newpad[b / 8] ^= (1 << (b & 7));
-                  }
+                  if (overlayrepeat)
+                     for (int X = x - ow * (W / ow + 1); X < W; X += ow)
+                        for (int Y = y - oh * (W / oh + 1); Y < W; Y += oh)
+                           set(X, Y, *o != '.');
+                  else
+                     set(x, y, *o != '.');
                }
                x++;
                o++;
