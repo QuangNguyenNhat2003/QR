@@ -327,6 +327,7 @@ int main(int argc, const char *argv[])
       }
    } else
    {                            // Simple
+	   if(rotate<0)rotate=0;
     grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep:&score);
       H = W;
    }
