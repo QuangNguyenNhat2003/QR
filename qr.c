@@ -355,14 +355,14 @@ int main(int argc, const char *argv[])
    case 'b':                   // bin
       {
          int y;
-         for (y = 0; y < H * S; y++)
+         for (y = H * S - 1; y >= 0; y--)       // from top
          {
             int v = 0,
                 x,
                 b = 128;
             for (x = 0; x < W * S; x++)
             {
-               if (grid[(H - 1 - y / S) * W + (x / S)] & 1)
+               if (grid[(y / S) * W + (x / S)] & 1)
                   v |= b;
                b >>= 1;
                if (!b)
@@ -380,7 +380,7 @@ int main(int argc, const char *argv[])
    case 't':                   // text
       {
          int y;
-         for (y = (H * S) - 1; y >= 0; y--)
+         for (y = (H * S) - 1; y >= 0; y--)     // From top
          {
             int x;
             for (x = 0; x < (W * S); x++)
@@ -410,8 +410,8 @@ int main(int argc, const char *argv[])
          i->Colour[1] = 0;
          for (y = 0; y < H; y++)
             for (x = 0; x < W; x++)
-               if (grid[(H - 1 - y) * W + x] & 1)
-                  ImagePixel(i, x, H - y - 1) = 1;
+               if (grid[y * W + x] & 1)
+                  ImagePixel(i, x, y) = 1;
          if (isupper(*format))
             ImageSVGPath(i, stdout, 1);
          else
@@ -464,8 +464,8 @@ int main(int argc, const char *argv[])
             i->Colour[1] = 0;
             for (y = 0; y < H * S; y++)
                for (x = 0; x < W * S; x++)
-                  if (grid[(H - 1 - y / S) * W + (x / S)] & 1)
-                     ImagePixel(i, x, (H * S) - y - 1) = 1;
+                  if (grid[(y / S) * W + (x / S)] & 1)
+                     ImagePixel(i, x, y) = 1;
          }
          if (*format == 'd')
          {                      // data URI
