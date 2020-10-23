@@ -380,11 +380,11 @@ int main(int argc, const char *argv[])
    case 't':                   // text
       {
          int y;
-         for (y = (H * S) - 1; y >= 0; y--)     // From top
+         for (y = 0; y < H * S; y++)
          {
             int x;
             for (x = 0; x < (W * S); x++)
-               printf("%s", (grid[W * (H - 1 - y / S) + (x / S)] & 1) ? " " : "█");
+               printf("%s", (grid[W * (y / S) + (x / S)] & 1) ? " " : "█");
             printf("\n");
          }
       }
