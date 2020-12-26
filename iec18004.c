@@ -313,7 +313,31 @@ ui8 *qr_encode_opts(
    {                            // No ECI set, lets see if we need to set UTF-8, note 5C is Yen in default ECI and 7E is special too
       for (n = 0; n < o.len && !(o.data[n] & 0x80) && o.data[n] != 0x5C && o.data[n] != 0x7E; n++);
       if (n < o.len)
-         o.eci = 26;            // UTF-8 ECI
+         o.eci = 26;            // Assume UTF-8
+   }
+   if (o.eci == 26)
+   {                            // UTF-8 check valid
+      int skip = 0;
+      for (n = 0; n < o.len; n++)
+      {
+         if (skip)
+         {
+            if ((o.data[n] & 0xC0) != 0x80)
+               break;           // Expecting UTF-8 continuation
+            skip--;
+            continue;
+         }
+         if ((o.data[n] & 0xF8) == 0xF0)
+            skip = 3;
+         else if ((o.data[n] & 0xF0) == 0xE0)
+            skip = 2;
+         else if ((o.data[n] & 0xE0) == 0xC0)
+            skip = 1;
+         else if (o.data[n] & 0x80)
+            break;              // Not sensible UTF-8
+      }
+      if (n < o.len || skip)
+         o.eci = 0;             // Not UTF-8
    }
    if (o.eci == 20)
       o.eci = 0;                // 20 is default (JIS8 and Shift JIS)
