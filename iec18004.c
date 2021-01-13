@@ -807,7 +807,7 @@ ui8 *qr_encode_opts(
       set(8, 7, (fcode & (1 << 6)) ? 1 : 0);
       for (n = 0; n <= 7; n++)
          set(w - n - 1, 8, (fcode & (1 << n)) ? 1 : 0);
-      for (n = 8; n << 14; n++)
+      for (n = 8; n <= 14; n++)
          set(8, w - (14 - n) - 1, (fcode & (1 << n)) ? 1 : 0);
    }
    setfcode(o.mask);
