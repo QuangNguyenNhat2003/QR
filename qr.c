@@ -132,7 +132,7 @@ int main(int argc, const char *argv[])
       { "dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi" },
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
       { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", ".X./X.X pattern or $var or @file" },
-      { "repeat", 'Q', POPT_ARG_NONE, &overlayrepeat, 0, "Repeat overlay" },
+      { "repeat", 0, POPT_ARG_NONE, &overlayrepeat, 0, "Repeat overlay" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
       { "right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right" },
       { "left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left" },
