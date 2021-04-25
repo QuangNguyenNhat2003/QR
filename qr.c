@@ -118,6 +118,7 @@ int main(int argc, const char *argv[])
       { "svg", 0, POPT_ARG_VAL, &formatcode, 'v', "SVG" },
       { "path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path" },
       { "png", 0, POPT_ARG_VAL, &formatcode, 'p', "PNG" },
+      { "kicad", 0, POPT_ARG_VAL, &formatcode, 'k', "KiCad foorprint" },
       { "data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI" },
       { "png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG" },
       { "eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS" },
@@ -511,6 +512,26 @@ int main(int argc, const char *argv[])
          } else
             ImageWritePNG(i, fileno(stdout), 0, -1, barcode);
          ImageFree(i);
+      }
+      break;
+   case 'k':                   // KiCad footprint
+      {
+         float U = 0.25 * S,
+             w = W * U / 2,
+             h = H * U / 2;
+         printf("(module QR (layer F.Cu)\n");
+         printf("(fp_text reference REF** (at 0 %f) (layer F.SilkS) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
+         printf("(fp_text value QR (at 0 %f) (layer F.Fab) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", -w, -h, -w, h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", -w, h, w, h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", w, h, w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", w, -h, -w, -h);
+         printf("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0.1))\n", -w, -h, -w, h, w, h, w, -h);
+         for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++)
+               if (grid[y * W + x] & 1)
+                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * x - w + U / 2, h - U * y - U / 2, U, U, U * 4);
+         printf(")\n");
       }
       break;
    default:
