@@ -516,7 +516,9 @@ int main(int argc, const char *argv[])
       break;
    case 'k':                   // KiCad footprint
       {
-         float U = 0.25 * S,
+         if (scale <= 0)
+            scale = 0.2;        // Default (seems this does work in copper, may need to be bigger for silk screen)
+         float U = scale * S,
              w = W * U / 2,
              h = H * U / 2;
          printf("(module QR (layer F.Cu)\n");
