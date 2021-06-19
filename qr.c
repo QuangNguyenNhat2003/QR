@@ -532,7 +532,18 @@ int main(int argc, const char *argv[])
          for (int y = 0; y < H; y++)
             for (int x = 0; x < W; x++)
                if (grid[y * W + x] & 1)
-                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * x - w + U / 2, h - U * y - U / 2, U, U, U * 4);
+	       {
+		       int r,b;
+		       for(r=x+1;r<W&&(grid[y * W + r] & 1);r++);
+		       for(b=y+1;b<H;b++)
+		       {
+			       int z;
+			       for(z=x;z<r&&(grid[b * W + z] & 1);z++);
+			       if(z<r)break;
+		       }
+                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * (x+r)/2 - w + U / 2, h - U * (b+y)/2 - U / 2, U*(r-x), U*(b-y), U * 4);
+		  for(int X=x;X<r;X++)for(int Y=y;Y<b;Y++)grid[Y*W+X]=0;
+	       }
          printf(")\n");
       }
       break;
