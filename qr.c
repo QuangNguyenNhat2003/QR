@@ -543,7 +543,7 @@ int main(int argc, const char *argv[])
                      if (z < r)
                         break;
                   }
-                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * (x + r) / 2 - w + U / 2, h - U * (b + y) / 2 - U / 2, U * (r - x), U * (b - y), U * 4);
+                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * (x + r) / 2 - w , h - U * (b + y) / 2 , U * (r - x), U * (b - y), U * 4);
                   for (int X = x; X < r; X++)
                      for (int Y = y; Y < b; Y++)
                         grid[Y * W + X] = 0;
