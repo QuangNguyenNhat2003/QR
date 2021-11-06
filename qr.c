@@ -524,10 +524,10 @@ int main(int argc, const char *argv[])
          printf("(module QR (layer F.Cu)\n");
          printf("(fp_text reference REF** (at 0 %f) (layer F.SilkS) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
          printf("(fp_text value QR (at 0 %f) (layer F.Fab) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", -w, -h, -w, h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", -w, h, w, h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", w, h, w, -h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.12))\n", w, -h, -w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, -h, -w, h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h, w, h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h, w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
          printf("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0.1))\n", -w, -h, -w, h, w, h, w, -h);
          for (int y = 0; y < H; y++)
             for (int x = 0; x < W; x++)
