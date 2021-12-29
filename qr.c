@@ -520,7 +520,8 @@ int main(int argc, const char *argv[])
             scale = 0.2;        // Default (seems this does work in copper, may need to be bigger for silk screen)
          float U = scale * S,
              w = W * U / 2,
-             h = H * U / 2;
+             h = H * U / 2,
+             q = 0.05;
          printf("(module QR (layer F.Cu)\n");
          printf("(fp_text reference REF** (at 0 %f) (layer F.SilkS) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
          printf("(fp_text value QR (at 0 %f) (layer F.Fab) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
@@ -528,7 +529,10 @@ int main(int argc, const char *argv[])
          printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h, w, h);
          printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h, w, -h);
          printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
-         printf("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0.1))\n", -w, -h, -w, h, w, h, w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, -h, -w, h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, h, w, h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", w, h, w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", w, -h, -w, -h);
          for (int y = 0; y < H; y++)
             for (int x = 0; x < W; x++)
                if (grid[y * W + x] & 1)
@@ -543,11 +547,17 @@ int main(int argc, const char *argv[])
                      if (z < r)
                         break;
                   }
-                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * (x + r) / 2 - w, h - U * (b + y) / 2, U * (r - x), U * (b - y), U * 4);
+                  printf("(pad ~ smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * (x + r) / 2 - w, h - U * (b + y) / 2, U * (r - x), U * (b - y), U);
                   for (int X = x; X < r; X++)
                      for (int Y = y; Y < b; Y++)
                         grid[Y * W + X] = 0;
                }
+         printf("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w, h, w, h, w, -h);
+         printf("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n"
+                "(connect_pads (clearance 0))\n"
+                "(min_thickness 0.254)\n" "(keepout (tracks not_allowed) (vias not_allowed) (pads not_allowed ) (copperpour not_allowed) (footprints not_allowed))\n" "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n" "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + q, -w - q, h + q,
+                -w - q, -h - q, w + q, -h - q);
+         printf("(fp_text user \"%s\" (at 0 2.5 unlocked) (layer \"F.Fab\")\n" "(effects (font (size 0.1 0.1) (thickness 0.02))))\n", barcode);
          printf(")\n");
       }
       break;
