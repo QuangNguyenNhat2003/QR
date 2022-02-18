@@ -83,7 +83,7 @@ int main(int argc, const char *argv[])
    char *pad = NULL;
    char *mask = NULL;
    char *overlay = NULL;
-   char *kicadtag="{$DATE}";
+   char *kicadtag="${DATE}";
    int ai = 0;
    int ver = 0;
    int eci = 0;
