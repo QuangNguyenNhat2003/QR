@@ -83,6 +83,7 @@ int main(int argc, const char *argv[])
    char *pad = NULL;
    char *mask = NULL;
    char *overlay = NULL;
+   char *kicadtag="{$DATE}";
    int ai = 0;
    int ver = 0;
    int eci = 0;
@@ -119,6 +120,7 @@ int main(int argc, const char *argv[])
       { "path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path" },
       { "png", 0, POPT_ARG_VAL, &formatcode, 'p', "PNG" },
       { "kicad", 0, POPT_ARG_VAL, &formatcode, 'k', "KiCad foorprint" },
+      { "kicad-tag", 0, POPT_ARG_STRING|POPT_ARGFLAG_SHOW_DEFAULT, &kicadtag, 0, "KiCad tag below QR" },
       { "data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI" },
       { "png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG" },
       { "eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS" },
@@ -521,18 +523,23 @@ int main(int argc, const char *argv[])
          float U = scale * S,
              w = W * U / 2,
              h = H * U / 2,
-             q = 0.05;
+             q = 0.05,t=0;
          printf("(module QR (layer F.Cu)\n");
 	 printf("(attr exclude_from_pos_files exclude_from_bom)\n");
+	 if(*kicadtag)
+	 {
+		 printf("(fp_text user \"%s\" (at 0 3.6) (layer F.Cu) (effects (font (size 0.5 0.5) (thickness 0.1))))\n",kicadtag);
+		 t=1.4;
+	 }
          printf("(fp_text reference REF** (at 0 %f) (layer F.SilkS) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
          printf("(fp_text value QR (at 0 %f) (layer F.Fab) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, -h, -w, h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h, w, h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h, w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, -h, -w, h+t);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h+t, w, h+t);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h+t, w, -h);
          printf("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, -h, -w, h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, h, w, h);
-         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", w, h, w, -h);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, -h, -w, h+t);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, h+t, w, h+t);
+         printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", w, h+t, w, -h);
          printf("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", w, -h, -w, -h);
          for (int y = 0; y < H; y++)
             for (int x = 0; x < W; x++)
@@ -556,7 +563,7 @@ int main(int argc, const char *argv[])
          printf("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w, h, w, h, w, -h);
          printf("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n"
                 "(connect_pads (clearance 0))\n"
-                "(min_thickness 0.254)\n" "(keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed) (footprints not_allowed))\n" "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n" "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + q, -w - q, h + q,
+                "(min_thickness 0.254)\n" "(keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed) (footprints not_allowed))\n" "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n" "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h+t + q, -w - q, h+t + q,
                 -w - q, -h - q, w + q, -h - q);
          printf("(fp_text user \"%s\" (at 0 2.5 unlocked) (layer \"F.Fab\")\n" "(effects (font (size 0.1 0.1) (thickness 0.02))))\n", barcode);
          printf(")\n");
