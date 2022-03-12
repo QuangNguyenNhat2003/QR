@@ -6,7 +6,7 @@
 
 //#define DEBUG
 
-#ifdef FB
+#if	defined(FB)
 
 #define LIB
 #include <heaps.h>
@@ -16,6 +16,14 @@
 
 #define	malloc(n)	HEAP_alloc(heap,n)
 #define free(n)		HEAP_free(heap,n)
+
+#elif	defined(ESP_PLATFORM)
+
+#include <ctype.h>
+#include <string.h>
+#include "iec18004.h"
+#include <reedsol.h>
+typedef	unsigned char ui8;
 
 #else
 
