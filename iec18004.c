@@ -299,11 +299,11 @@ ui8 *qr_encode_opts(
          return NULL;           // Invalid
       ecl = e - ecls;
    }
-   if (o.san < 0 || o.sam < 0 || o.san > 16 || o.sam > 16 || o.san > o.sam || (o.sam && !o.san))
+   if (o.san > 16 || o.sam > 16 || o.san > o.sam || (o.sam && !o.san))
       return NULL;              // Silly structured append
-   if (o.ver < 0 || o.ver > 40)
+   if (o.ver > 40)
       return NULL;              // Silly version
-   if (o.fnc1 < 0 || o.fnc1 > 2)
+   if (o.fnc1 > 2)
       return NULL;              // Silly fnc1
    if (o.mode && !*o.mode)
       o.mode = NULL;            // Silly
@@ -978,7 +978,7 @@ ui8 *qr_encode_opts(
       if (!o.mask)
       {                         // Auto mask - find best mask using scoring
          unsigned int bestscore = 0;
-         char best = -1;
+         signed char best = -1;
          for (char m = 0; m < 8; m++)
          {
             unsigned int s = score(m);
