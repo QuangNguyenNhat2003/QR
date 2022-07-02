@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/random.h>
 #include "iec18004.h"
 
  // simple checked response malloc
@@ -96,6 +97,7 @@ int main(int argc, const char *argv[])
    int rotate = -1;
    int minsize = 0;
    int overlayrepeat = 0;
+   int randompad = 0;
    double scale = -1,
        dpi = -1;
    int S = -1;
@@ -136,9 +138,12 @@ int main(int argc, const char *argv[])
       { "pad", 0, POPT_ARG_STRING, &pad, 0, "Custom padding", "Text" },
       { "overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", ".X./X.X pattern or $var or @file" },
       { "repeat", 0, POPT_ARG_NONE, &overlayrepeat, 0, "Repeat overlay" },
+      { "random", 0, POPT_ARG_NONE, &randompad, 0, "Random padding" },
       { "no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space" },
       { "right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right" },
+      { "down", 0, POPT_ARG_VAL, &rotate, 2, "Rotate 180" },
       { "left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left" },
+      { "up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0" },
       { "min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N" },
       { "format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg" },
@@ -243,12 +248,18 @@ int main(int argc, const char *argv[])
       int padlen = 0;
       if (!ver && !minsize)
          padlen = barcodelen;   // Force some padding
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep: &newmode, scorep: &score, padlen:padlen);
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep: &newmode, scorep:&score);
       H = W;
       if (padlen > 2)
       {                         // Padding available
          unsigned char newpad[padlen];
          qr_padding(padlen, newpad);
+         if (randompad)
+         {
+            getrandom(newpad, padlen, 0);
+            free(grid);
+          grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
+         }
          // Find size of overlay
          int ow = 0,
              oh = 0;
@@ -353,11 +364,8 @@ int main(int argc, const char *argv[])
             int b;
             if (x < 0 || x >= W || y < 0 || y >= W || (b = padmap[y * W + x]) < 0)
                return;
-            if ((grid[y * W + x] & QR_TAG_BLACK))
+            if ((grid[y * W + x] & QR_TAG_BLACK) ? !v : v)
                newpad[b / 8] ^= (1 << (b & 7));
-            if (!v)
-               return;
-            newpad[b / 8] ^= (1 << (b & 7));
          }
          int y = oy;
          o = overlay;
@@ -389,8 +397,16 @@ int main(int argc, const char *argv[])
    {                            // Simple
       if (rotate < 0)
          rotate = 0;
-    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep:&score);
+      int padlen = 0;
+    grid = qr_encode(barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen(pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep: &score, padlenp:&padlen);
       H = W;
+      if (randompad && padlen > 2)
+      {                         // Padding available
+         unsigned char newpad[padlen];
+         getrandom(newpad, padlen, 0);
+         free(grid);
+       grid = qr_encode(barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, minsize: minsize, rotate: rotate, scorep:&score);
+      }
    }
 
    // output
