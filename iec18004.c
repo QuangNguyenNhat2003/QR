@@ -153,7 +153,7 @@ void qr_mode(char *mode, unsigned char ver, unsigned int len, const char *input)
    int n;
    for (n = 0; n < len; n++)
    {
-      if (input[n] && isdigit(input[n]))
+      if (input[n] && isdigit((int)input[n]))
          mode[n] = 'N';
       else if (input[n] && strchr(alnum, input[n]))
          mode[n] = 'A';
@@ -393,7 +393,7 @@ ui8 *qr_encode_opts(
          {
          case 'N':             // Numeric 
             while (q--)
-               if (!o.data[n] || !isdigit(o.data[n++]))
+               if (!o.data[n] || !isdigit((int)o.data[n++]))
                   return -1;    // Invalid
             break;
          case 'A':             // Alphanumeric
