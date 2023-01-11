@@ -119,14 +119,14 @@ int main(int argc, const char *argv[])
       { "number", 'M', POPT_ARG_INT, &sam, 0, "Structured append", "M" },
       { "total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N" },
       { "parity", 0, POPT_ARG_INT, &parity, 0, "Structured append parity", "0-255" },
-      { "dark", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &dark, 0, "Dark colour (png and svg)" },
-      { "light", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &light, 0, "Light colour (png and svg)" },
+      { "dark", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &dark, 0, "Dark colour (png and svg)", "Colour" },
+      { "light", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &light, 0, "Light colour (png and svg)", "Colour" },
       { "outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or -" },
       { "svg", 0, POPT_ARG_VAL, &formatcode, 'v', "SVG" },
       { "path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path" },
       { "png", 0, POPT_ARG_VAL, &formatcode, 'p', "PNG" },
       { "kicad", 0, POPT_ARG_VAL, &formatcode, 'k', "KiCad foorprint" },
-      { "kicad-tag", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadtag, 0, "KiCad tag below QR" },
+      { "kicad-tag", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadtag, 0, "KiCad tag below QR", "text" },
       { "data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI" },
       { "png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG" },
       { "eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS" },
@@ -173,7 +173,7 @@ int main(int argc, const char *argv[])
       const char *p;
       for (p = c; isxdigit(*p); p++);
       if (l < 3 || l == 5 || l == 7 || l > 8 || *p)
-         errx(1, "Colour is #RGB, #RGBA, #RRGGBB, #RRGGBBAA");
+         errx(1, "Colour is #RGB, #RGBA, #RRGGBB, or #RRGGBBAA");
       unsigned int v = 0;
       for (p = c; *p; p++)
       {
