@@ -85,6 +85,8 @@ int main(int argc, const char *argv[])
    char *mask = NULL;
    char *overlay = NULL;
    char *kicadtag = "${DATE}";
+   char *dark = "#000000";
+   char *light = "#FFFFFF";
    int ai = 0;
    int ver = 0;
    int eci = 0;
@@ -117,6 +119,8 @@ int main(int argc, const char *argv[])
       { "number", 'M', POPT_ARG_INT, &sam, 0, "Structured append", "M" },
       { "total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N" },
       { "parity", 0, POPT_ARG_INT, &parity, 0, "Structured append parity", "0-255" },
+      { "dark", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &dark, 0, "Dark colour (png and svg)" },
+      { "light", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &light, 0, "Light colour (png and svg)" },
       { "outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or -" },
       { "svg", 0, POPT_ARG_VAL, &formatcode, 'v', "SVG" },
       { "path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path" },
@@ -162,6 +166,30 @@ int main(int argc, const char *argv[])
       poptPrintUsage(optCon, stderr, 0);
       return -1;
    }
+   unsigned int colour(const char *c) {
+      if (*c == '#')
+         c++;
+      int l = strlen(c);
+      const char *p;
+      for (p = c; isxdigit(*p); p++);
+      if (l < 3 || l == 5 || l == 7 || l > 8 || *p)
+         errx(1, "Colour is #RGB, #RGBA, #RRGGBB, #RRGGBBAA");
+      unsigned int v = 0;
+      for (p = c; *p; p++)
+      {
+         int n = (*p & 0xF) + (isalpha(*p) ? 9 : 0);
+         if (l > 4)
+            v = (v << 4) + n;
+         else
+            v = (v << 8) + (n << 4) + n;
+      }
+      if (l == 3 || l == 6)
+         v <<= 8;
+      v = (v >> 8) + (v << 24); // A at top.
+      return v;
+   }
+   unsigned int darkcolour = colour(dark);
+   unsigned int lightcolour = colour(light);
 
    if (formatcode && format)
       errx(1, "--format is deprecated");
@@ -482,8 +510,8 @@ int main(int argc, const char *argv[])
           y;
          Image *i;
          i = ImageNew(W, H, 2);
-         i->Colour[0] = 0xFFFFFF;
-         i->Colour[1] = 0;
+         i->Colour[0] = lightcolour;
+         i->Colour[1] = darkcolour;
          for (y = 0; y < H; y++)
             for (x = 0; x < W; x++)
                if (grid[y * W + x] & 1)
@@ -512,8 +540,8 @@ int main(int argc, const char *argv[])
             i->Colour[5] = 0x004400;
             i->Colour[6] = 0xCCCCFF;    // DATA
             i->Colour[7] = 0x000044;
-            i->Colour[8] = 0xFFFFFF;    // FIXED
-            i->Colour[9] = 0x000000;
+            i->Colour[8] = lightcolour; // FIXED
+            i->Colour[9] = darkcolour;
             i->Colour[10] = 0xCCCCCC;   // FORMAT
             i->Colour[11] = 0x444444;
             for (y = 0; y < H * S; y++)
@@ -536,8 +564,8 @@ int main(int argc, const char *argv[])
          } else
          {
             i = ImageNew(W * S, H * S, 2);
-            i->Colour[0] = 0xFFFFFF;
-            i->Colour[1] = 0;
+            i->Colour[0] = lightcolour;
+            i->Colour[1] = darkcolour;
             for (y = 0; y < H * S; y++)
                for (x = 0; x < W * S; x++)
                   if (grid[(y / S) * W + (x / S)] & 1)
@@ -545,17 +573,19 @@ int main(int argc, const char *argv[])
          }
          if (*format == 'd')
          {                      // data URI
-		 char *buf;size_t len;
-		 FILE *f=open_memstream(&buf,&len);
+            char *buf;
+            size_t len;
+            FILE *f = open_memstream(&buf, &len);
             ImageWritePNG(i, f, 0, -1, barcode);
-	    fclose(f);
+            fclose(f);
             printf("data:image/png;base64,");
             static const char BASE64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
             int b = 0,
-                v = 0,i=0;
-            while (i<len)
+                v = 0,
+                i = 0;
+            while (i < len)
             {
-               unsigned char c=buf[i++];
+               unsigned char c = buf[i++];
                b += 8;
                v = (v << 8) | c;
                while (b >= 6)
@@ -578,7 +608,7 @@ int main(int argc, const char *argv[])
                b -= 6;
                putchar('=');
             }
-	    free(buf);
+            free(buf);
          } else
             ImageWritePNG(i, stdout, 0, -1, barcode);
          ImageFree(i);
