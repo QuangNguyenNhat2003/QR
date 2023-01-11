@@ -119,8 +119,8 @@ int main(int argc, const char *argv[])
       { "number", 'M', POPT_ARG_INT, &sam, 0, "Structured append", "M" },
       { "total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N" },
       { "parity", 0, POPT_ARG_INT, &parity, 0, "Structured append parity", "0-255" },
-      { "dark", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &dark, 0, "Dark colour (png and svg)", "Colour" },
-      { "light", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &light, 0, "Light colour (png and svg)", "Colour" },
+      { "dark", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &dark, 0, "Dark colour (png, eps, and svg)", "Colour" },
+      { "light", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &light, 0, "Light colour (png, eps, and svg)", "Colour" },
       { "outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or -" },
       { "svg", 0, POPT_ARG_VAL, &formatcode, 'v', "SVG" },
       { "path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path" },
@@ -500,9 +500,27 @@ int main(int argc, const char *argv[])
       //printf ("%d %d 1[1 0 0 1 -%d -%d]{<\n", W * S, H * S, S, S);
       if (scale)
          printf("%.4f dup scale ", (scale * 72 / 25.4 / S));
-      printf("%d %d 1[1 0 0 1 0 0]{<\n", W * S, H * S);
-      dumphex(grid, W, H, 0xFF, S, 0);
-      printf(">}image\n");
+      if (lightcolour != 0xFFFFFF || darkcolour != 0)
+      {
+         printf("%d %d 8[1 0 0 1 0 0]{<\n", W * S, H * S);
+         for (int y = 0; y < H * S; y++)
+         {
+            for (int x = 0; x < W * S; x++)
+            {
+               if (grid[(H - 1 - y / S) * W + (x / S)] & 1)
+                  printf("%02X%02X%02X", (darkcolour >> 16) & 0xFF, (darkcolour >> 8) & 0xFF, darkcolour & 0xFF);
+               else
+                  printf("%02X%02X%02X", (lightcolour >> 16) & 0xFF, (lightcolour >> 8) & 0xFF, lightcolour & 0xFF);
+            }
+            printf("\n");
+         }
+         printf(">}false 3 colorimage\n");
+      } else
+      {
+         printf("%d %d 1[1 0 0 1 0 0]{<\n", W * S, H * S);
+         dumphex(grid, W, H, 0xFF, S, 0);
+         printf(">}image\n");
+      }
       break;
    case 'v':                   // svg
       {
