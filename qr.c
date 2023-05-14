@@ -85,6 +85,7 @@ int main(int argc, const char *argv[])
    char *mask = NULL;
    char *overlay = NULL;
    char *kicadtag = "${DATE}";
+   char *kicadpad = "-";
    char *dark = "#000000";
    char *light = "#FFFFFF";
    int ai = 0;
@@ -642,7 +643,7 @@ int main(int argc, const char *argv[])
              q = 0.05,
              t = 0;
          printf("(module QR (layer F.Cu)\n");
-         printf("(attr exclude_from_pos_files exclude_from_bom)\n");
+         printf("(attr exclude_from_pos_files exclude_from_bom allow_soldermask_bridges)\n");
          if (*kicadtag)
          {
             printf("(fp_text user \"%s\" (at 0 3.6) (layer F.Cu) (effects (font (size 0.5 0.5) (thickness 0.1))))\n", kicadtag);
@@ -672,7 +673,7 @@ int main(int argc, const char *argv[])
                      if (z < r)
                         break;
                   }
-                  printf("(pad \"\" smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", U * (x + r) / 2 - w, h - U * (b + y) / 2, U * (r - x), U * (b - y), U);
+                  printf("(pad \"%s\" smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", kicadpad,U * (x + r) / 2 - w, h - U * (b + y) / 2, U * (r - x), U * (b - y), U);
                   for (int X = x; X < r; X++)
                      for (int Y = y; Y < b; Y++)
                         grid[Y * W + X] = 0;
