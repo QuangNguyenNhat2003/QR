@@ -87,7 +87,7 @@ main (int argc, const char *argv[])
    char *pad = NULL;
    char *mask = NULL;
    char *overlay = NULL;
-   char *kicadtag = "${DATE}";
+   char *kicadtag = "${CURRENT_DATE}";
    char *kicadfont = "OCR-B";
    char *kicadpad = "-";
    char *dark = "#000000";
