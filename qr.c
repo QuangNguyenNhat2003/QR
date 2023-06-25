@@ -89,6 +89,7 @@ main (int argc, const char *argv[])
    char *overlay = NULL;
    char *kicadtag = "${CURRENT_DATE}";
    char *kicadfont = "OCR-B";
+   char *kicadlayer = "F.Cu";
    char *kicadpad = "-";
    char *dark = "#000000";
    char *light = "#FFFFFF";
@@ -132,6 +133,8 @@ main (int argc, const char *argv[])
       {"png", 0, POPT_ARG_VAL, &formatcode, 'p', "PNG"},
       {"kicad", 0, POPT_ARG_VAL, &formatcode, 'k', "KiCad foorprint"},
       {"kicad-tag", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadtag, 0, "KiCad tag below QR", "text"},
+      {"kicad-font", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadfont, 0, "KiCad font", "font"},
+      {"kicad-layer", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadlayer, 0, "KiCad layer", "layer"},
       {"data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI"},
       {"png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG"},
       {"eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS"},
@@ -651,11 +654,11 @@ main (int argc, const char *argv[])
             h = H * U / 2,
             q = 0.05,
             t = 0;
-         printf ("(module QR (layer F.Cu)\n");
+         printf ("(module QR (layer %s)\n", kicadlayer);
          printf ("(attr exclude_from_pos_files exclude_from_bom allow_soldermask_bridges)\n");
          if (*kicadtag)
          {
-            printf ("(fp_text user \"%s\" (at 0 3.6) (layer F.Cu) (effects (font ", kicadtag);
+            printf ("(fp_text user \"%s\" (at 0 3.6) (layer %s) (effects (font ", kicadtag, kicadlayer);
             if (*kicadfont)
                printf ("(face \"%s\") ", kicadfont);
             printf ("(size 0.5 0.5) (thickness 0.1))))\n");
@@ -663,10 +666,6 @@ main (int argc, const char *argv[])
          }
          printf ("(fp_text reference REF** (at 0 %f) (layer F.SilkS) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
          printf ("(fp_text value QR (at 0 %f) (layer F.Fab) hide (effects (font (size 1 1) (thickness 0.15))))\n", h + 1);
-         printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, -h, -w, h + t);
-         printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h + t, w, h + t);
-         printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h + t, w, -h);
-         printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
          printf ("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, -h, -w, h + t);
          printf ("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", -w, h + t, w, h + t);
          printf ("(fp_line (start %f %f) (end %f %f) (layer F.Fab) (width 0.1))\n", w, h + t, w, -h);
@@ -685,20 +684,27 @@ main (int argc, const char *argv[])
                      if (z < r)
                         break;
                   }
-                  printf ("(pad \"%s\" smd rect (at %f %f) (size %f %f) (layers F.Cu) (clearance %f))\n", kicadpad,
-                          U * (x + r) / 2 - w, h - U * (b + y) / 2, U * (r - x), U * (b - y), U);
+                  printf ("(pad \"%s\" smd rect (at %f %f) (size %f %f) (layers %s) (clearance %f))\n", kicadpad,
+                          U * (x + r) / 2 - w, h - U * (b + y) / 2, U * (r - x), U * (b - y), kicadlayer, U);
                   for (int X = x; X < r; X++)
                      for (int Y = y; Y < b; Y++)
                         grid[Y * W + X] = 0;
                }
-         printf ("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w, h, w, h, w,
-                 -h);
-         printf ("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n" "(connect_pads (clearance 0))\n"
-                 "(min_thickness 0.254)\n"
-                 "(keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed) (footprints not_allowed))\n"
-                 "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n"
-                 "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + t + q, -w - q, h + t + q, -w - q,
-                 -h - q, w + q, -h - q);
+         if (strstr (kicadlayer, "Cu"))
+         {
+            printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, -h, -w, h + t);
+            printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h + t, w, h + t);
+            printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h + t, w, -h);
+            printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
+            printf ("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w, h, w, h,
+                    w, -h);
+            printf ("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n" "(connect_pads (clearance 0))\n"
+                    "(min_thickness 0.254)\n"
+                    "(keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed) (footprints not_allowed))\n"
+                    "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n"
+                    "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + t + q, -w - q, h + t + q, -w - q,
+                    -h - q, w + q, -h - q);
+         }
          printf ("(fp_text user \"%s\" (at 0 2.5 unlocked) (layer \"F.Fab\")\n"
                  "(effects (font (size 0.1 0.1) (thickness 0.02))))\n", barcode);
          printf (")\n");
