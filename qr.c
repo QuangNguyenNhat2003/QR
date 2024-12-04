@@ -3,6 +3,7 @@
 // This software is provided free of charge with a full "Money back" guarantee.
 // Use entirely at your own risk. We accept no liability. If you don't like that - don't use it.
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <ctype.h>
@@ -140,6 +141,11 @@ main (int argc, const char *argv[])
       {"eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS"},
       {"ps", 0, POPT_ARG_VAL, &formatcode, 'g', "Postscript"},
       {"text", 0, POPT_ARG_VAL, &formatcode, 't', "Text"},
+      {"text-rv", 0, POPT_ARG_VAL, &formatcode, 'T', "Text (reverse video)"},
+      {"h-text", 0, POPT_ARG_VAL, &formatcode, 'a', "Half-height text"},
+      {"h-text-rv", 0, POPT_ARG_VAL, &formatcode, 'A', "Half-height text (reverse video)"},
+      {"q-text", 0, POPT_ARG_VAL, &formatcode, 'q', "Quarter-size text"},
+      {"q-text-rv", 0, POPT_ARG_VAL, &formatcode, 'Q', "Quarter-size text (reverse video)"},
       {"binary", 0, POPT_ARG_VAL, &formatcode, 'b', "Binary"},
       {"hex", 0, POPT_ARG_VAL, &formatcode, 'h', "Hex"},
       {"info", 0, POPT_ARG_VAL, &formatcode, 'i', "Info"},
@@ -494,12 +500,62 @@ main (int argc, const char *argv[])
       break;
    case 't':                   // text
       {
+         const unsigned char invert = (*format == 'T') ? 0 : 1;
          int y;
          for (y = 0; y < H * S; y++)
          {
             int x;
             for (x = 0; x < (W * S); x++)
-               printf ("%s", (grid[W * (y / S) + (x / S)] & 1) ? " " : "█");
+               printf ("%s", (grid[W * (y / S) + (x / S)] & 1) ^ invert ? "█" : " ");
+            printf ("\n");
+         }
+      }
+      break;
+   case 'a':                   // half-height text
+      {
+         const char *blocks[4] = {" ", "▀", "▄", "█"};
+         const unsigned char invert = (*format == 'A') ? 0 : 1;
+         int y;
+         for (y = 0; y < H * S; y += 2)
+         {
+            const bool has_bottom = y + 1 < H * S;
+            int x;
+            for (x = 0; x < W * S; x++)
+            {
+               unsigned int top = grid[W * (y / S) + (x / S)] & 1;
+               unsigned int bottom = has_bottom ? (grid[W * ((y + 1) / S) + (x / S)] & 1) : 0;
+               printf ("%s", blocks[(top  ^ invert) | ((bottom ^ invert) << 1)]);
+            }
+            printf ("\n");
+         }
+      }
+      break;
+   case 'q':                   // quarter-size text
+      {
+         const char *blocks[16] = {
+            " ", "▘", "▝", "▀",
+            "▖", "▌", "▞", "▛",
+            "▗", "▚", "▐", "▜",
+            "▄", "▙", "▟", "█"
+         };
+         const unsigned char invert = (*format == 'Q') ? 0 : 1;
+         int y;
+         for (y = 0; y < H * S; y += 2)
+         {
+            const bool has_bottom = y + 1 < H * S;
+            int x;
+            for (x = 0; x < W * S; x += 2)
+            {
+               const bool has_right = x + 1 < W * S;
+               unsigned int top_left = grid[W * (y / S) + (x / S)] & 1;
+               unsigned int top_right = has_right ? (grid[W * (y / S) + ((x + 1) / S)] & 1) : 0;
+               unsigned int bottom_left = has_bottom ? (grid[W * ((y + 1) / S) + (x / S)] & 1) : 0;
+               unsigned int bottom_right = (has_bottom && has_right) ? (grid[W * ((y + 1) / S) + ((x + 1) / S)] & 1) : 0;
+               printf ("%s", blocks[(top_left ^ invert)
+                  | ((top_right ^ invert) << 1)
+                  | ((bottom_left ^ invert) << 2)
+                  | ((bottom_right ^ invert) << 3)]);
+            }
             printf ("\n");
          }
       }
