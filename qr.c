@@ -299,7 +299,8 @@ main (int argc, const char *argv[])
          qr_padding (padlen, newpad);
          if (randompad)
          {
-            getrandom (newpad, padlen, 0);
+            if (getrandom (newpad, padlen, 0) != padlen)
+               err (1, "Random fail");
             free (grid);
           grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
          }
@@ -448,7 +449,8 @@ main (int argc, const char *argv[])
       if (randompad && padlen > 2)
       {                         // Padding available
          unsigned char newpad[padlen];
-         getrandom (newpad, padlen, 0);
+         if (getrandom (newpad, padlen, 0) != padlen)
+            err (1, "Random fail");
          free (grid);
        grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, minsize: minsize, rotate: rotate, scorep:&score);
       }
