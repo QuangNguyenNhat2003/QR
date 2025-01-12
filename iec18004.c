@@ -44,7 +44,6 @@ typedef unsigned char ui8;
 #include <unistd.h>
 #include <ctype.h>
 #include <err.h>
-#include <axl.h>
 #include "iec18004.h"
 #include <reedsol.h>
 #include <assert.h>
