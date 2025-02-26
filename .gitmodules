@@ -1,12 +1,3 @@
 [submodule "Reedsol"]
 	path = Reedsol
 	url = https://github.com/revk/Reedsol
-[submodule "Image"]
-	path = Image
-	url = https://github.com/revk/Image
-[submodule "AXL"]
-	path = AXL
-	url = https://github.com/revk/AXL
-[submodule "SQLlib"]
-	path = SQLlib
-	url = https://github.com/revk/SQLlib

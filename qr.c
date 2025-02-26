@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
-#include <image.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -126,20 +125,11 @@ main (int argc, const char *argv[])
       {"number", 'M', POPT_ARG_INT, &sam, 0, "Structured append", "M"},
       {"total", 'N', POPT_ARG_INT, &san, 0, "Structured append", "N"},
       {"parity", 0, POPT_ARG_INT, &parity, 0, "Structured append parity", "0-255"},
-      {"dark", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &dark, 0, "Dark colour (png, eps, and svg)", "Colour"},
-      {"light", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &light, 0, "Light colour (png, eps, and svg)", "Colour"},
       {"outfile", 'o', POPT_ARG_STRING, &outfile, 0, "Output filename", "filename or -"},
-      {"svg", 0, POPT_ARG_VAL, &formatcode, 'v', "SVG"},
-      {"path", 0, POPT_ARG_VAL, &formatcode, 'V', "SVG path"},
-      {"png", 0, POPT_ARG_VAL, &formatcode, 'p', "PNG"},
       {"kicad", 0, POPT_ARG_VAL, &formatcode, 'k', "KiCad foorprint"},
       {"kicad-tag", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadtag, 0, "KiCad tag below QR", "text"},
       {"kicad-font", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadfont, 0, "KiCad font", "font"},
       {"kicad-layer", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadlayer, 0, "KiCad layer", "layer"},
-      {"data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI"},
-      {"png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG"},
-      {"eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS"},
-      {"ps", 0, POPT_ARG_VAL, &formatcode, 'g', "Postscript"},
       {"text", 0, POPT_ARG_VAL, &formatcode, 't', "Text"},
       {"text-rv", 0, POPT_ARG_VAL, &formatcode, 'T', "Text (reverse video)"},
       {"h-text", 0, POPT_ARG_VAL, &formatcode, 'a', "Half-height text"},
@@ -164,7 +154,7 @@ main (int argc, const char *argv[])
       {"up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0"},
       {"min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N"},
       {"format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
-       "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg"},
+       "x=size/t[s]=text/b=bin/h[s]=hex"},
       POPT_AUTOHELP {
                      NULL, 0, 0, NULL, 0}
    };
@@ -180,32 +170,6 @@ main (int argc, const char *argv[])
       poptPrintUsage (optCon, stderr, 0);
       return -1;
    }
-   unsigned int colour (const char *c)
-   {
-      if (*c == '#')
-         c++;
-      int l = strlen (c);
-      const char *p;
-      for (p = c; isxdigit (*p); p++);
-      if (l < 3 || l == 5 || l == 7 || l > 8 || *p)
-         errx (1, "Colour is #RGB, #RGBA, #RRGGBB, or #RRGGBBAA");
-      unsigned int v = 0;
-      for (p = c; *p; p++)
-      {
-         int n = (*p & 0xF) + (isalpha (*p) ? 9 : 0);
-         if (l > 4)
-            v = (v << 4) + n;
-         else
-            v = (v << 8) + (n << 4) + n;
-      }
-      if (l == 3 || l == 6)
-         v <<= 8;
-      v = (v >> 8) + (v << 24); // A at top.
-      return v;
-   }
-   unsigned int darkcolour = colour (dark);
-   unsigned int lightcolour = colour (light);
-
    if (formatcode && format)
       errx (1, "--format is deprecated");
    char formatspace[2] = { };
@@ -218,8 +182,6 @@ main (int argc, const char *argv[])
       errx (1, "--mm or --dpi");
    if (dpi > 0)
       scale = 25.4 / dpi;
-   if (scale >= 0 && S >= 0 && *format != 'e' && *format != 'g')
-      errx (1, "--scale or --mm/--dpi");
 
    if (format && *format && format[1])  // Old scale after format
       S = atoi (format + 1);    // scale
@@ -230,13 +192,6 @@ main (int argc, const char *argv[])
    if (scale < 0)
       scale = 0;
 
-   if (outfile && !strcmp (outfile, "data:"))
-   {                            // Legacy format for data:
-      if (*format != 'p')
-         errx (1, "data: only for png");
-      outfile = NULL;
-      *format = 'd';
-   }
    if (outfile && strcmp (outfile, "-") && !freopen (outfile, "w", stdout))
       err (1, "%s", outfile);
 
@@ -560,147 +515,6 @@ main (int argc, const char *argv[])
             }
             printf ("\n");
          }
-      }
-      break;
-   case 'e':                   // EPS
-      printf ("%%!PS-Adobe-3.0 EPSF-3.0\n" "%%%%Creator: IEC18004 barcode/stamp generator\n" "%%%%BarcodeData: %s\n"
-              "%%%%BarcodeSize: %dx%d\n" "%%%%DocumentData: Clean7Bit\n" "%%%%LanguageLevel: 1\n" "%%%%Pages: 1\n"
-              "%%%%BoundingBox: 0 0 %d %d\n" "%%%%EndComments\n" "%%%%Page: 1 1\n", barcode, W * S, H * S,
-              (int) ((double) W * (scale * 72 / 25.4 ? : S) + .99), (int) ((double) H * (scale * 72 / 25.4 ? : S) + 0.99));
-   case 'g':                   // PS
-      //printf ("%d %d 1[1 0 0 1 -%d -%d]{<\n", W * S, H * S, S, S);
-      if (scale)
-         printf ("%.4f dup scale ", (scale * 72 / 25.4 / S));
-      if (lightcolour != 0xFFFFFF || darkcolour != 0)
-      {
-         printf ("%d %d 8[1 0 0 1 0 0]{<\n", W * S, H * S);
-         for (int y = 0; y < H * S; y++)
-         {
-            for (int x = 0; x < W * S; x++)
-            {
-               if (grid[(H - 1 - y / S) * W + (x / S)] & 1)
-                  printf ("%02X%02X%02X", (darkcolour >> 16) & 0xFF, (darkcolour >> 8) & 0xFF, darkcolour & 0xFF);
-               else
-                  printf ("%02X%02X%02X", (lightcolour >> 16) & 0xFF, (lightcolour >> 8) & 0xFF, lightcolour & 0xFF);
-            }
-            printf ("\n");
-         }
-         printf (">}false 3 colorimage\n");
-      } else
-      {
-         printf ("%d %d 1[1 0 0 1 0 0]{<\n", W * S, H * S);
-         dumphex (grid, W, H, 0xFF, S, 0);
-         printf (">}image\n");
-      }
-      break;
-   case 'v':                   // svg
-      {
-         int x,
-           y;
-         Image *i;
-         i = ImageNew (W, H, 2);
-         i->Colour[0] = lightcolour;
-         i->Colour[1] = darkcolour;
-         for (y = 0; y < H; y++)
-            for (x = 0; x < W; x++)
-               if (grid[y * W + x] & 1)
-                  ImagePixel (i, x, y) = 1;
-         if (isupper (*format))
-            ImageSVGPath (i, stdout, 1);
-         else
-            ImageWriteSVG (i, stdout, 0, -1, barcode, scale);
-         ImageFree (i);
-      }
-      break;
-   case 'd':                   // png data
-   case 'p':                   // png
-      {
-         int x,
-           y;
-         Image *i;
-         if (*format == 'P')
-         {                      // Special mode to make coloured QR code with different logical parts
-            i = ImageNew (W * S, H * S, 12);
-            i->Colour[0] = 0xFFFF88;    // Quiet
-            i->Colour[1] = 0x000000;
-            i->Colour[2] = 0xFFCCCC;    // ECC
-            i->Colour[3] = 0x440000;
-            i->Colour[4] = 0xCCFFCC;    // PAD
-            i->Colour[5] = 0x004400;
-            i->Colour[6] = 0xCCCCFF;    // DATA
-            i->Colour[7] = 0x000044;
-            i->Colour[8] = lightcolour; // FIXED
-            i->Colour[9] = darkcolour;
-            i->Colour[10] = 0xCCCCCC;   // FORMAT
-            i->Colour[11] = 0x444444;
-            for (y = 0; y < H * S; y++)
-               for (x = 0; x < W * S; x++)
-               {
-                  unsigned char u = grid[(H - 1 - y / S) * W + (x / S)],
-                     o = (u & 1);
-                  if (u & QR_TAG_ECC)
-                     o += 2;
-                  else if (u & QR_TAG_PAD)
-                     o += 4;
-                  else if (u & QR_TAG_DATA)
-                     o += 6;
-                  else if (u & QR_TAG_FIXED)
-                     o += 8;
-                  else if (u & QR_TAG_SET)
-                     o += 10;
-                  ImagePixel (i, x, (H * S) - y - 1) = o;
-               }
-         } else
-         {
-            i = ImageNew (W * S, H * S, 2);
-            i->Colour[0] = lightcolour;
-            i->Colour[1] = darkcolour;
-            for (y = 0; y < H * S; y++)
-               for (x = 0; x < W * S; x++)
-                  if (grid[(y / S) * W + (x / S)] & 1)
-                     ImagePixel (i, x, y) = 1;
-         }
-         if (*format == 'd')
-         {                      // data URI
-            char *buf;
-            size_t len;
-            FILE *f = open_memstream (&buf, &len);
-            ImageWritePNG (i, f, 0, -1, barcode);
-            fclose (f);
-            printf ("data:image/png;base64,");
-            static const char BASE64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-            int b = 0,
-               v = 0,
-               i = 0;
-            while (i < len)
-            {
-               unsigned char c = buf[i++];
-               b += 8;
-               v = (v << 8) | c;
-               while (b >= 6)
-               {
-                  b -= 6;
-                  putchar (BASE64[(v >> b) & 0x3F]);
-               }
-            }
-            if (b)
-            {
-               b += 8;
-               v = (v << 8);
-               b -= 6;
-               putchar (BASE64[(v >> b) & 0x3F]);
-            }
-            while (b)
-            {
-               if (b < 6)
-                  b += 8;
-               b -= 6;
-               putchar ('=');
-            }
-            free (buf);
-         } else
-            ImageWritePNG (i, stdout, 0, -1, barcode);
-         ImageFree (i);
       }
       break;
    case 'k':                   // KiCad footprint
