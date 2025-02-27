@@ -182,8 +182,6 @@ main (int argc, const char *argv[])
       errx (1, "--mm or --dpi");
    if (dpi > 0)
       scale = 25.4 / dpi;
-   if (scale >= 0 && S >= 0 && *format != 'e' && *format != 'g')
-      errx (1, "--scale or --mm/--dpi");
 
    if (format && *format && format[1])  // Old scale after format
       S = atoi (format + 1);    // scale
